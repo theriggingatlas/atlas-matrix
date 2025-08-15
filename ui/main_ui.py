@@ -16,6 +16,21 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QFormLayout,
 
 class ui_window_main(object):
     def setupUi(self, window_main):
+        """
+        Set up the user interface for the main Atlas Matrix window.
+
+        This method configures all widgets, layouts, signals, and actions
+        that make up the main window of the Atlas Matrix tool, including:
+            - A tabbed interface with "Parent", "Aim", and "Manager" sections.
+            - Constraint configuration for translate, rotate, scale, and shear.
+            - Options for aim constraints with primary and secondary axes.
+            - Menu actions such as Help, Author, Contact, and Reset Preferences.
+            - Interactive sliders connected to line edits.
+            - Logical toggles for axis constraint group checkboxes.
+
+        Args:
+            window_main (QMainWindow): The main window to populate with the UI elements.
+        """
         if not window_main.objectName():
             window_main.setObjectName(u"window_main")
         window_main.resize(694, 665)
@@ -704,6 +719,16 @@ class ui_window_main(object):
     # setupUi
 
     def retranslateUi(self, window_main):
+        """
+        Set the display text for UI elements to support internationalization.
+
+        This method sets human-readable labels and texts for all widgets in
+        the interface using Qt's translation system, allowing the UI to be
+        localized into different languages.
+
+        Args:
+            window_main (QMainWindow): The main window with UI elements to translate.
+        """
         window_main.setWindowTitle(QCoreApplication.translate("window_main", u"Atlas Matrix - V.1.0.0", None))
         self.action_reset_preferences.setText(QCoreApplication.translate("window_main", u"Reset Preferences", None))
         self.action_help.setText(QCoreApplication.translate("window_main", u"Help", None))
