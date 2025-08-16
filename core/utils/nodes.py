@@ -49,12 +49,12 @@ class Matrix:
 
         return f"{mm_name}.matrixSum"
 
-    def pick_matrix(self, input, name, pm_translate=True, pm_rotate=True, pm_scale=True):
-        pm_name=name
-        cmds.createNode("pickMatrix", name=pm_name)
-        cmds.setAttr(f"{pm_name}.useTranslate", pm_translate)
-        cmds.setAttr(f"{pm_name}.useRotate", pm_rotate)
-        cmds.setAttr(f"{pm_name}.useScale", pm_scale)
-        cmds.connectAttr(input, f"{pm_name}.inputMatrix")
+    def pick_matrix(self, input, name, translate_pick_matrix=True, rotate_pick_matrix=True, scale_pick_matrix=True):
+        node_pick_matrix=name
+        cmds.createNode("pickMatrix", name=node_pick_matrix)
+        cmds.setAttr(f"{node_pick_matrix}.useTranslate", translate_pick_matrix)
+        cmds.setAttr(f"{node_pick_matrix}.useRotate", rotate_pick_matrix)
+        cmds.setAttr(f"{node_pick_matrix}.useScale", scale_pick_matrix)
+        cmds.connectAttr(input, f"{node_pick_matrix}.inputMatrix")
 
-        return f"{pm_name}.outputMatrix"
+        return f"{node_pick_matrix}.outputMatrix"

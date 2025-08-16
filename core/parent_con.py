@@ -13,70 +13,122 @@ from core.utils import attributes
 from core.utils import transform
 
 class ParentCon:
-    def __init__(self, object_list=None, bm_translate=1, bm_rotate=1, bm_scale=1, offset=False, pick_mat=False, pm_translate=False, pm_rotate=False, pm_scale=False):
+    """
+    Class to create a matrix-based parent constraint in Maya.
+
+    This constraint system uses multMatrix, decomposeMatrix, and optionally
+    pickMatrix, holdMatrix, and blendMatrix nodes for precise control over
+    transformations.
+
+    Attributes:
+        object_list (list): List of selected objects. Last is the constrained.
+        translate_blend_matrix (float): Blend weight for translation.
+        rotate_blend_matrix (float): Blend weight for rotation.
+        scale_blend_matrix (float): Blend weight for scale.
+        offset (bool): Whether to maintain offset between objects.
+        hold (bool): Whether to keep initial offset in place using holdMatrix.
+        pick_matrix (bool): Whether to use pickMatrix for filtering transformations.
+        translate_pick_matrix (bool): Enable translation filter on pickMatrix.
+        rotate_pick_matrix (bool): Enable rotation filter on pickMatrix.
+        scale_pick_matrix (bool): Enable scale filter on pickMatrix.
+    """
+    def __init__(self, object_list=None, translate_blend_matrix=1, rotate_blend_matrix=1, scale_blend_matrix=1, offset=False, hold=False, pick_matrix=False, translate_pick_matrix=False, rotate_pick_matrix=False, scale_pick_matrix=False):
+        """Initialize the ParentCon constraint setup."""
         self.blend_matrix_node = None
-        self.bm_translate = bm_translate
-        self.bm_rotate = bm_rotate
-        self.bm_scale = bm_scale
+        self.translate_blend_matrix = translate_blend_matrix
+        self.rotate_blend_matrix = rotate_blend_matrix
+        self.scale_blend_matrix = scale_blend_matrix
 
-        self.pick_mat = pick_mat
-        self.pm_translate = pm_translate
-        self.pm_rotate = pm_rotate
-        self.pm_scale = pm_scale
+        self.pick_matrix = pick_matrix
+        self.translate_pick_matrix = translate_pick_matrix
+        self.rotate_pick_matrix = rotate_pick_matrix
+        self.scale_pick_matrix = scale_pick_matrix
 
-        self.node = nodes.Matrix()
+        self.matrix_node = nodes.Matrix()
 
         self.offset = offset
         self.object_list = object_list or cmds.ls(selection=True)
         self.constrained_obj = self.object_list[-1]
 
+        self.hold = hold
 
 
-    def hold_matrix(self, constrainer, constrained, hm_name):
-        mm_name = "tmp_multmatrix"
-
-        out_mm = self.node.mult_matrix([attributes.get_world_matrix(constrained), attributes.get_world_inverse_matrix(constrainer)], name=mm_name)
-        self.node.hold_matrix(input=mm_name, name=hm_name)
-
-        existing_connections = cmds.listConnections(attributes.get_in_matrix(hm_name), s=True, d=False, p=True)
-        if existing_connections:
-            cmds.disconnectAttr(out_mm, attributes.get_in_matrix(hm_name))
-        cmds.delete(mm_name)
-        return f"{hm_name}.outMatrix"
+    @staticmethod
+    def disconnect_input(attr):
+        """Disconnect any input connections from the given attribute."""
+        connections = cmds.listConnections(attr, s=True, d=False, p=True) or []
+        for src in connections:
+            cmds.disconnectAttr(src, attr)
 
 
-    def _mount_system(self, constraining_obj, parent):
-        existing_connections = cmds.listConnections(attributes.get_offset_parent_matrix(self.constrained_obj), s=True, d=False, p=True)
-        if existing_connections:
-            for connection in existing_connections:
-                print(f"Disconnecting {connection} from {self.constrained_obj}.offsetParentMatrix")
-                cmds.disconnectAttr(connection, attributes.get_offset_parent_matrix(self.constrained_obj))
+    def hold_matrix(self, constrainer, constrained, name_hold_matrix):
+        """
+        Create a hold matrix node to maintain offset between objects.
 
-        if self.pick_mat:
-            pm_name = f"pickmatrix_{self.constrained_obj}_constrainedby_{constraining_obj}"
-            out_pm = self.node.pick_matrix(input=attributes.get_world_matrix(constraining_obj), name=pm_name, pm_translate=self.pm_translate, pm_rotate=self.pm_rotate, pm_scale=self.pm_scale)
-            primary_world = out_pm
+        Args:
+            constrainer (str): Object acting as the source.
+            constrained (str): Object being constrained.
+            name_hold_matrix (str): Desired name for the holdMatrix node.
+
+        Returns:
+            str: Output matrix attribute.
+        """
+        node_multmatrix = "tmp_multmatrix"
+
+        out_multmatrix = self.matrix_node.mult_matrix([attributes.get_world_matrix(constrained), attributes.get_world_inverse_matrix(constrainer)], name=node_multmatrix)
+        self.matrix_node.hold_matrix(input=node_multmatrix, name=name_hold_matrix)
+
+        self.disconnect_input(attributes.get_in_matrix(name_hold_matrix))
+        cmds.delete(node_multmatrix)
+        return f"{name_hold_matrix}.outMatrix"
+
+
+    def _mount_system(self, driver_object, parent):
+        """
+        Internal setup to create the multMatrix chain and connect it.
+
+        Args:
+            driver_object (str): The driver object.
+            parent (str): Parent of the constrained object.
+
+        Returns:
+            str: The multMatrix node name.
+        """
+        self.disconnect_input(attributes.get_offset_parent_matrix(self.constrained_obj))
+
+        if self.pick_matrix:
+            name_pick_matrix = f"pickmatrix_{self.constrained_obj}_constrainedby_{driver_object}"
+            out_pick_matrix = self.matrix_node.pick_matrix(input=attributes.get_world_matrix(driver_object), name=name_pick_matrix, translate_pick_matrix=self.translate_pick_matrix, rotate_pick_matrix=self.rotate_pick_matrix, scale_pick_matrix=self.scale_pick_matrix)
+            driver_world_matrix = out_pick_matrix
         else:
-            primary_world = attributes.get_world_matrix(constraining_obj)
+            driver_world_matrix = attributes.get_world_matrix(driver_object)
 
         if self.offset:
-            hm_name = f"holdmatrix_{self.constrained_obj}_constrainedby_{constraining_obj}"
-            out_hm = self.hold_matrix(constrainer=constraining_obj,constrained=self.constrained_obj, hm_name=hm_name)
-            multmatrix_list = [out_hm, primary_world, attributes.get_world_inverse_matrix(parent)]
+            name_hold_matrix = f"holdmatrix_{self.constrained_obj}_constrainedby_{driver_object}"
+            out_hold_matrix = self.hold_matrix(constrainer=driver_object,constrained=self.constrained_obj, name_hold_matrix=name_hold_matrix)
+            multmatrix_nodes = [out_hold_matrix, driver_world_matrix, attributes.get_world_inverse_matrix(parent)]
         else:
-            multmatrix_list = [primary_world, attributes.get_world_inverse_matrix(parent)]
+            multmatrix_nodes = [driver_world_matrix, attributes.get_world_inverse_matrix(parent)]
 
-        mm_name = f"multmatrix_{self.constrained_obj}_constrainedby_{constraining_obj}"
-        out_mm = self.node.mult_matrix(multmatrix_list, name=mm_name)
+        node_multmatrix = f"multmatrix_{self.constrained_obj}_constrainedby_{driver_object}"
+        out_multmatrix = self.matrix_node.mult_matrix(multmatrix_nodes, name=node_multmatrix)
 
-        cmds.connectAttr(out_mm, attributes.get_offset_parent_matrix(self.constrained_obj))
+        if self.offset and not self.hold:
+            hold_matrix_out_attr = attributes.get_out_matrix(name_hold_matrix)
+            matrix_value = cmds.getAttr(hold_matrix_out_attr)
+            cmds.disconnectAttr(f"{node_multmatrix}.matrixIn[0]", hold_matrix_out_attr)
+
+            # Set the matrixIn[0] input of multMatrix with the retrieved matrix
+            cmds.setAttr(f'{node_multmatrix}.matrixIn[0]', matrix_value, type='matrix')
+
+        cmds.connectAttr(out_multmatrix, attributes.get_offset_parent_matrix(self.constrained_obj))
         transform.idtransform(self.constrained_obj)
 
-        return  mm_name
+        return  node_multmatrix
 
 
-    def _bm_weights(self):
-
+    def _blend_matrix_weights(self):
+        """Set blend weights on the blendMatrix node."""
         if not self.blend_matrix_node or not cmds.objExists(self.blend_matrix_node):
             print(" Error: Blend Matrix node does not exist. Skipping weight update.")
             return
@@ -88,39 +140,49 @@ class ParentCon:
             return
 
         for i in range(target_count):
-            cmds.setAttr(f"{self.blend_matrix_node}.target[{i}].translateWeight", self.bm_translate)
-            cmds.setAttr(f"{self.blend_matrix_node}.target[{i}].rotateWeight", self.bm_rotate)
-            cmds.setAttr(f"{self.blend_matrix_node}.target[{i}].scaleWeight", self.bm_scale)
+            cmds.setAttr(f"{self.blend_matrix_node}.target[{i}].translateWeight", self.translate_blend_matrix)
+            cmds.setAttr(f"{self.blend_matrix_node}.target[{i}].rotateWeight", self.rotate_blend_matrix)
+            cmds.setAttr(f"{self.blend_matrix_node}.target[{i}].scaleWeight", self.scale_blend_matrix)
         print(
-            f"Set target[{i}] weights -> Translate: {self.bm_translate}, Rotate: {self.bm_rotate}, Scale: {self.bm_scale}")
+            f"Set target[{i}] weights -> Translate: {self.translate_blend_matrix}, Rotate: {self.rotate_blend_matrix}, Scale: {self.scale_blend_matrix}")
 
 
-    def _create_blend_matrix(self, multmatrix_list):
+    def _create_blend_matrix(self, multmatrix_nodes):
+        """
+        Create a blendMatrix node and connect multMatrix outputs.
 
-        bm_name = f"blendmat_{self.constrained_obj}"
-        self.blend_matrix_node = cmds.createNode("blendMatrix", name=bm_name)
+        Args:
+            multmatrix_nodes (list): List of multMatrix node names.
 
-        cmds.connectAttr(f"{multmatrix_list[0]}.matrixSum", f"{self.blend_matrix_node}.inputMatrix")
+        Returns:
+            str: Name of the blendMatrix node.
+        """
+        name_blend_matrix = f"blendmat_{self.constrained_obj}"
+        self.blend_matrix_node = cmds.createNode("blendMatrix", name=name_blend_matrix)
 
-        for idx, multmatrix in enumerate(multmatrix_list[1:], start=1):
+        cmds.connectAttr(f"{multmatrix_nodes[0]}.matrixSum", f"{self.blend_matrix_node}.inputMatrix")
+
+        for idx, multmatrix in enumerate(multmatrix_nodes[1:], start=1):
             cmds.connectAttr(f"{multmatrix}.matrixSum", f"{self.blend_matrix_node}.target[{idx - 1}].targetMatrix")
 
-        existing_connections = cmds.listConnections(attributes.get_offset_parent_matrix(self.constrained_obj), s=True, d=False, p=True)
-        if existing_connections:
-            for connection in existing_connections:
-                print(f"Disconnecting {connection} from {self.constrained_obj}.offsetParentMatrix")
-                cmds.disconnectAttr(connection, attributes.get_offset_parent_matrix(self.constrained_obj))
+        self.disconnect_input(attributes.get_offset_parent_matrix(self.constrained_obj))
 
         cmds.connectAttr(f"{self.blend_matrix_node}.outputMatrix", attributes.get_offset_parent_matrix(self.constrained_obj))
 
-        self._bm_weights()
-        return bm_name
+        self._blend_matrix_weights()
+        return name_blend_matrix
 
     def create_constraint(self):
+        """
+        Entry method to create the full constraint system.
+
+        Returns:
+            str: Blend matrix name if used, otherwise None.
+        """
         if len(self.object_list) < 2:
             raise ValueError("Please select at least two objects.")
 
-        constraining_objs = self.object_list[:-1]
+        driver_objects = self.object_list[:-1]
 
         parent = cmds.listRelatives(self.constrained_obj, parent=True)
 
@@ -131,20 +193,20 @@ class ParentCon:
             cmds.parent(self.constrained_obj, offset_constrained_obj)
             cmds.select(clear=True)
             print("Offset parent for constrained object has been created")
-            parent = offset_constrained_obj  # Corrected: Set parent to the new offset object
+            parent = offset_constrained_obj
 
         else:
             parent = parent[0]
 
-        multmatrix_list = []
+        multmatrix_nodes = []
 
-        for constraining_obj in constraining_objs:
-            print(constraining_objs)
-            print(attributes.get_world_matrix(constraining_obj))
-            multmatrix = self._mount_system(constraining_obj, parent)
-            multmatrix_list.append(multmatrix)
+        for driver_object in driver_objects:
+            print(driver_objects)
+            print(attributes.get_world_matrix(driver_object))
+            multmatrix = self._mount_system(driver_object, parent)
+            multmatrix_nodes.append(multmatrix)
 
-        if len(constraining_objs) > 1:
-            bm_name = self._create_blend_matrix(multmatrix_list)
-            return bm_name
+        if len(driver_objects) > 1:
+            name_blend_matrix = self._create_blend_matrix(multmatrix_nodes)
+            return name_blend_matrix
 
