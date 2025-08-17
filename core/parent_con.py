@@ -28,11 +28,16 @@ class ParentCon:
         offset (bool): Whether to maintain offset between objects.
         hold (bool): Whether to keep initial offset in place using holdMatrix.
         pick_matrix (bool): Whether to use pickMatrix for filtering transformations.
-        translate_pick_matrix (bool): Enable translation filter on pickMatrix.
-        rotate_pick_matrix (bool): Enable rotation filter on pickMatrix.
-        scale_pick_matrix (bool): Enable scale filter on pickMatrix.
+        translate_all (bool): Enable translation filter on constraint.
+        rotate_all (bool): Enable rotation filter on constraint.
+        scale_all (bool): Enable scale filter on constraint.
+        shear_all (bool): Enable shear filter on constraint.
     """
-    def __init__(self, object_list=None, translate_blend_matrix=1, rotate_blend_matrix=1, scale_blend_matrix=1, offset=False, hold=False, pick_matrix=False, translate_pick_matrix=False, rotate_pick_matrix=False, scale_pick_matrix=False):
+    def __init__(self, object_list=None, translate_blend_matrix=1, rotate_blend_matrix=1, scale_blend_matrix=1,
+                 offset=False, hold=False, pick_matrix=False,
+                 translate_all=False, rotate_all=False, scale_all=False, shear_all=False,
+                 translate=None, rotate=None, scale=None, shear=None
+                 ):
         """Initialize the ParentCon constraint setup."""
         self.blend_matrix_node = None
         self.translate_blend_matrix = translate_blend_matrix
@@ -40,9 +45,20 @@ class ParentCon:
         self.scale_blend_matrix = scale_blend_matrix
 
         self.pick_matrix = pick_matrix
-        self.translate_pick_matrix = translate_pick_matrix
-        self.rotate_pick_matrix = rotate_pick_matrix
-        self.scale_pick_matrix = scale_pick_matrix
+        self.translate_all = translate_all
+        self.rotate_all = rotate_all
+        self.scale_all = scale_all
+        self.shear_all = shear_all
+
+        translate = translate if translate is not None else [True, True, True]
+        rotate = rotate if rotate is not None else [True, True, True]
+        scale = scale if scale is not None else [True, True, True]
+        shear = shear if shear is not None else [True, True, True]
+
+        self.translate = [axis for axis, flag in zip("XYZ", translate) if flag]
+        self.rotate = [axis for axis, flag in zip("XYZ", rotate) if flag]
+        self.scale = [axis for axis, flag in zip("XYZ", scale) if flag]
+        self.shear = [axis for axis, flag in zip("XYZ", shear) if flag]
 
         self.matrix_node = nodes.Matrix()
 
@@ -82,6 +98,67 @@ class ParentCon:
         cmds.delete(node_multmatrix)
         return f"{name_hold_matrix}.outMatrix"
 
+    def _driver_node(self, driver_object: str) -> str:
+        """
+        Determines and returns the appropriate matrix output node for a driver object,
+        based on the current pick/compose options and selected axes.
+
+        Args:
+            driver_object (str): The object that drives the constraint.
+
+        Returns:
+            str: Output attribute of a matrix node (e.g., worldMatrix, pickMatrix, or composeMatrix).
+        """
+        name_pick_matrix = f"pickmatrix_{self.constrained_obj}_constrainedby_{driver_object}"
+
+        # Group data for generic iteration
+        channels = {
+            "translate": {"all": self.translate_all, "axes": self.translate},
+            "rotate": {"all": self.rotate_all, "axes": self.rotate},
+            "scale": {"all": self.scale_all, "axes": self.scale},
+            "shear": {"all": self.shear_all, "axes": self.shear}
+        }
+
+        # Case 1: All *_all are True → use full world matrix directly
+        if all(data["all"] for data in channels.values()):
+            return attributes.get_world_matrix(driver_object)
+
+        # Case 2: Only one *_all is True, others are False and have empty axes → use pickMatrix
+        active_all_keys = [key for key, data in channels.items() if data["all"]]
+        inactive_empty_keys = [key for key, data in channels.items() if not data["all"] and not data["axes"]]
+
+        if (
+                len(active_all_keys) == 1 and
+                len(inactive_empty_keys) == 3  # only one active, rest disabled and empty
+        ):
+            return self.matrix_node.pick_matrix(
+                input=attributes.get_world_matrix(driver_object),
+                name=name_pick_matrix,
+                translate_pick_matrix=self.translate_all,
+                rotate_pick_matrix=self.rotate_all,
+                scale_pick_matrix=self.scale_all,
+                shear_pick_matrix=self.shear_all
+            )
+
+        # Case 3: Custom axis selections → decompose + compose
+        any_custom_axes = any(data["axes"] for data in channels.values())
+
+        if any_custom_axes:
+            decompose = self.matrix_node.decompose_matrix(
+                input=attributes.get_world_matrix(driver_object),
+                name=f"decompose_{driver_object}"
+            )
+            return self.matrix_node.compose_matrix(
+                input=decompose,
+                name=driver_object,
+                translate=self.translate,
+                rotate=self.rotate,
+                scale=self.scale,
+                shear=self.shear
+            )
+
+        # Fallback: default to worldMatrix
+        return attributes.get_world_matrix(driver_object)
 
     def _mount_system(self, driver_object, parent):
         """
@@ -98,8 +175,7 @@ class ParentCon:
 
         if self.pick_matrix:
             name_pick_matrix = f"pickmatrix_{self.constrained_obj}_constrainedby_{driver_object}"
-            out_pick_matrix = self.matrix_node.pick_matrix(input=attributes.get_world_matrix(driver_object), name=name_pick_matrix, translate_pick_matrix=self.translate_pick_matrix, rotate_pick_matrix=self.rotate_pick_matrix, scale_pick_matrix=self.scale_pick_matrix)
-            driver_world_matrix = out_pick_matrix
+            driver_world_matrix = self.matrix_node.pick_matrix(input=attributes.get_world_matrix(driver_object), name=name_pick_matrix, translate_pick_matrix=self.translate_all, rotate_pick_matrix=self.rotate_all, scale_pick_matrix=self.scale_all)
         else:
             driver_world_matrix = attributes.get_world_matrix(driver_object)
 
