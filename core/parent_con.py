@@ -146,7 +146,7 @@ class ParentCon:
         if any_custom_axes:
             decompose_matrix_node = self.matrix_node.decompose_matrix(
                 input=attributes.get_world_matrix(driver_object),
-                name=f"decompose_{driver_object}"
+                name=driver_object
             )
             return attributes.get_out_matrix(self.matrix_node.compose_matrix(
                 input=decompose_matrix_node,

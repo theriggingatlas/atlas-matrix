@@ -27,7 +27,7 @@ class Matrix:
         Returns:
             str: The name of the created decomposeMatrix node.
         """
-        decompose_matrix_node = name
+        decompose_matrix_node = f"decomposematrix_{name}"
 
         cmds.createNode("decomposeMatrix", name = decompose_matrix_node)
         cmds.connectAttr(input_node, f"{decompose_matrix_node}.inputMatrix")
@@ -51,7 +51,7 @@ class Matrix:
         Returns:
             str: The name of the created composeMatrix node.
         """
-        compose_matrix_node = f"composeMatrix_{name}"
+        compose_matrix_node = f"composematrix_{name}"
         if not cmds.objExists(compose_matrix_node):
             cmds.createNode("composeMatrix", name=compose_matrix_node)
 
