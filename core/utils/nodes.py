@@ -27,7 +27,7 @@ class Matrix:
         Returns:
             str: The name of the created decomposeMatrix node.
         """
-        decompose_matrix_node = f"decomposematrix_{name}"
+        decompose_matrix_node = name
 
         cmds.createNode("decomposeMatrix", name = decompose_matrix_node)
         cmds.connectAttr(input_node, f"{decompose_matrix_node}.inputMatrix")
@@ -116,4 +116,4 @@ class Matrix:
         cmds.setAttr(f"{node_pick_matrix}.useScale", scale_pick_matrix)
         cmds.connectAttr(input_node, f"{node_pick_matrix}.inputMatrix")
 
-        return f"{node_pick_matrix}.outputMatrix"
+        return node_pick_matrix

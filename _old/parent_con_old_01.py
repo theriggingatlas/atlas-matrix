@@ -33,20 +33,12 @@ class ParentCon:
         self.hold = hold
 
 
-    @staticmethod
-    def disconnect_input(attr):
-        connections = cmds.listConnections(attr, s=True, d=False, p=True) or []
-        for src in connections:
-            cmds.disconnectAttr(src, attr)
-
-
     def hold_matrix(self, constrainer, constrained, name_hm):
         name_mm = "tmp_multmatrix"
 
         out_mm = self.node.mult_matrix([attributes.get_world_matrix(constrained), attributes.get_world_inverse_matrix(constrainer)], name=name_mm)
         self.node.hold_matrix(input=name_mm, name=name_hm)
 
-        self.disconnect_input(attributes.get_in_matrix(name_hm))
         existing_connections = cmds.listConnections(attributes.get_in_matrix(name_hm), s=True, d=False, p=True)
         if existing_connections:
             cmds.disconnectAttr(out_mm, attributes.get_in_matrix(name_hm))

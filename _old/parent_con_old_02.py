@@ -173,7 +173,11 @@ class ParentCon:
         """
         self.disconnect_input(attributes.get_offset_parent_matrix(self.constrained_obj))
 
-        driver_world_matrix = self._driver_node(driver_object)
+        if self.pick_matrix:
+            name_pick_matrix = f"pickmatrix_{self.constrained_obj}_constrainedby_{driver_object}"
+            driver_world_matrix = self.matrix_node.pick_matrix(input=attributes.get_world_matrix(driver_object), name=name_pick_matrix, translate_pick_matrix=self.translate_all, rotate_pick_matrix=self.rotate_all, scale_pick_matrix=self.scale_all)
+        else:
+            driver_world_matrix = attributes.get_world_matrix(driver_object)
 
         if self.offset:
             name_hold_matrix = f"holdmatrix_{self.constrained_obj}_constrainedby_{driver_object}"
