@@ -32,5 +32,7 @@ def get_in_matrix(obj):
 def get_out_matrix(obj):
     if verification.is_pickmatrix(obj) or verification.is_composematrix(obj) or verification.is_inversematrix(obj):
         return f"{obj}.outputMatrix"
+    elif verification.is_multmatrix(obj):
+        return f"{obj}.matrixSum"
     else:
         return f"{obj}.outMatrix"
