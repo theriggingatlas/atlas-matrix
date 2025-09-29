@@ -229,7 +229,7 @@ class ParentCon:
         Returns:
             str: Name of the blendMatrix node.
         """
-        name_blend_matrix = f"blendmat_{self.constrained_obj}"
+        name_blend_matrix = f"blendmatrix_{self.constrained_obj}"
         self.blend_matrix_node = cmds.createNode("blendMatrix", name=name_blend_matrix)
 
         cmds.connectAttr(f"{multmatrix_nodes[0]}.matrixSum", f"{self.blend_matrix_node}.inputMatrix")

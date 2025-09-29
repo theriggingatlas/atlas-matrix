@@ -68,7 +68,7 @@ launcher.launch()
 - Axis weight sliders (LineEdit + Slider linked)
 - Axis selection control (X, Y, Z)
 
-### ✅ Aim Constraint Tab
+### 🚧 Aim Constraint Tab
 - Aim & Up vector configuration
 - Target vectors with XYZ inputs
 - World up type selection
