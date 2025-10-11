@@ -246,6 +246,7 @@ class Matrix:
 
         cmds.connectAttr(source, target)
 
+
     def disconnect_matrix(self, source: str, target: str) -> None:
         """Disconnect one matrix attribute from another.
 
