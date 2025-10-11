@@ -1,16 +1,22 @@
-"""
+""" DEP function to use parent constraint matrix inside Maya
 
 Author: Clement Daures
 Company: The Rigging Atlas
 Website: theriggingatlas.com
 Created: 2025
-About: DEP function to use parent constraint matrix inside Maya
-
 """
+
+# ---------- IMPORT ----------
+
 import maya.cmds as cmds
+
 from core.utils import nodes
 from core.utils import attributes
 from core.utils import transform
+
+
+# ---------- MAIN CLASS ----------
+
 
 class ParentCon:
     """

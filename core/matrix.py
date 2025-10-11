@@ -1,11 +1,18 @@
-"""
+# -*- coding: utf-8 -*-
+""" DEP class to use matrix inside Maya
+
+This module provides the `Matrix` class, which allows precise control
+over object transformations using matrix nodes in Maya. It can create
+and manage nodes such as multMatrix, decomposeMatrix, composeMatrix,
+holdMatrix, and blendMatrix, enabling matrix-based parent and aim
+constraints without relying on standard Maya constraint nodes.
 
 Author: Clement Daures
 Company: The Rigging Atlas
 Website: theriggingatlas.com
 Created: 2025
-About: DEP function to use parent constraint matrix inside Maya
 
+To do : adding get_world_matrix, get_inverse_world_matrix, get_offset_parent_matrix
 """
 
 # ---------- IMPORT ----------
@@ -78,7 +85,7 @@ class Matrix:
 
 
     @staticmethod
-    def _index_validation(matrix_node: str, index: Optional[int]) -> None:
+    def _index_validation(matrix_node: str, index: Optional[int] = None) -> None:
         """Validate that an index is provided for a matrix node connection.
 
         Args:

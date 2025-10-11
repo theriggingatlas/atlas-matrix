@@ -1,79 +1,161 @@
-"""
+""" Utilities functions that allow verifying identity of object
 
 Author: Clement Daures
 Company: The Rigging Atlas
 Website: theriggingatlas.com
 Created: 2025
-About: A utility function that allow verifying identity of object"
-
 """
+
+# ---------- IMPORT ----------
+
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
+
 from core.utils import nodes
 
 
+# ---------- FUNCTIONS ----------
+
+
 def is_multmatrix(name: str)-> bool:
-    """Check if the node is a multMatrix."""
+    """Check if the given node is a multMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'multMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "multMatrix"
 
 
 def is_addmatrix(name: str)-> bool:
-    """Check if the node is a multMatrix."""
+    """Check if the given node is an addMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'addMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "addMatrix"
 
 
 def is_wtaddmatrix(name: str)-> bool:
-    """Check if the node is a multMatrix."""
+    """Check if the given node is a wtAddMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'wtAddMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "wtAddMatrix"
 
 
 def is_holdmatrix(name: str)-> bool:
-    """Check if the node is a holdMatrix."""
+    """Check if the given node is a holdMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'holdMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "multMatrix"
 
 
 def is_joint(name: str) -> bool:
-    """Check if the node is a joint."""
+    """Check if the given node is a joint node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'joint', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "joint"
 
 
 def is_inversematrix(name: str)-> bool:
-    """Check if the node is an inverseMatrix."""
+    """Check if the given node is an inverseMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'inverseMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "inverseMatrix"
 
 
 def is_composematrix(name: str)-> bool:
-    """Check if the node is a composeMatrix."""
+    """Check if the given node is a composeMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'composeMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "composeMatrix"
 
 
 def is_decomposematrix(name: str)-> bool:
-    """Check if the node is a decomposeMatrix."""
+    """Check if the given node is a decomposeMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'decomposeMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "decomposeMatrix"
 
 
 def is_holdmatrix(name: str)-> bool:
-    """Check if the node is a holdMatrix."""
+    """Check if the given node is a holdMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'holdMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "holdMatrix"
 
 
 def is_pickmatrix(name: str)-> bool:
-    """Check if the node is a pickMatrix."""
+    """Check if the given node is a pickMatrix node.
+
+    Args:
+        name (str): The name of the node.
+
+    Returns:
+        bool: True if the node is of type 'pickMatrix', False otherwise.
+    """
     result = nodes.get_node_type(name)
     return result == "pickMatrix"
 
 
 def is_attribute(attr):
-    """Return True if string points to a valid (built-in or custom) attribute."""
+    """Check if a string points to a valid attribute on a Maya node.
+
+    Args:
+        attr (str): Attribute string in the form 'nodeName.attributeName'.
+
+    Returns:
+        bool: True if the attribute exists, False otherwise.
+    """
     if not isinstance(attr, str) or '.' not in attr:
         return False
 
@@ -88,7 +170,14 @@ def is_attribute(attr):
 
 
 def is_attribute_api(attr):
-    """Check if an attribute (built-in or custom) exists using OpenMaya API."""
+    """Check if a string points to a valid attribute using the OpenMaya API.
+
+    Args:
+        attr (str): Attribute string in the form 'nodeName.attributeName'.
+
+    Returns:
+        bool: True if the attribute exists and is valid, False otherwise.
+    """
     if not isinstance(attr, str) or '.' not in attr:
         return False
     try:
