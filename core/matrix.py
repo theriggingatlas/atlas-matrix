@@ -7,11 +7,21 @@ Created: 2025
 About: DEP function to use parent constraint matrix inside Maya
 
 """
+
+# ---------- IMPORT ----------
+
+from typing import Optional, List, Union
+
 import maya.cmds as cmds
+
 from core.utils import nodes
 from core.utils import attributes
 from core.utils import transform
 from core.utils import verification
+
+
+# ---------- MAIN CLASS ----------
+
 
 class Matrix:
     """Class to create a matrix-based parent constraint in Maya.
@@ -19,26 +29,32 @@ class Matrix:
     This constraint system uses multMatrix, decomposeMatrix, and optionally
     pickMatrix, holdMatrix, and blendMatrix nodes for precise control over
     transformations.
-
-    Attributes:
-
     """
 
-    def __init__(self, driven:str=None, driver:list[str]=None):
+    def __init__(self, driven: Optional[str] = None, drivers: Optional[List[str]] = None) -> None:
+        """Initialize the Matrix constraint builder.
+
+        Args:
+            driven (Optional[str]): The name of the driven object.
+            drivers (Optional[List[str]]): A list of driver object names.
+
+        Raises:
+            ValueError: If neither `driven` nor `drivers` are provided.
+        """
         user_sel = cmds.ls(selection=True) or []
         self.driven = driven or (user_sel[-1] if user_sel else None)
-        self.driver = driver or (user_sel[:-1] if user_sel else [])
+        self.drivers = drivers or (user_sel[:-1] if user_sel else [])
         self.constraint_type = ""
-        if not self.driven or not self.driver:
-            raise ValueError("Provide driven and at least one driver (or select drivers then driven).")
+        if not self.driven or not self.drivers:
+            raise ValueError("Provide driven and at least one driver.")
 
 
     @property
-    def constraining_name(self):
-        """Return the constraining type in str
+    def constraining_name(self) -> str:
+        """Get the type name used for constraint node naming.
 
-        Return:
-            str: Constrain type
+        Returns:
+            str: The constraint type identifier (e.g., "pconstrainedby" or "aconstrainedby").
         """
         return {
             "parent": "pconstrainedby",
@@ -46,97 +62,123 @@ class Matrix:
         }.get(self.constraint_type, "")
 
 
-    def mult_matrix(self):
-        """Return driver multMatrix name for the driven object
+    @staticmethod
+    def _attribute_validation(attribute_list: List[str]) -> None:
+        """Validate that all submitted strings are valid Maya attributes.
 
+        Args:
+            attribute_list (List[str]): A list of attribute strings to validate.
 
-        Example:
-            self.driven = driven_obj
-            self.driver = driver_obj
-            constrain_type = "parent"
-
-            return multmatrix_driven_obj_pconstrainedby_driver_obj
-
-        Return:
-            str: Name of the multMatrix
+        Raises:
+            ValueError: If one or more attributes are invalid.
         """
-        mult_matrix_name = f"multMatrix_{self.driven}_{self.constraining_name}_{self.driver}"
-        cmds.createNode("multMatrix", name= mult_matrix_name)
-
-        return mult_matrix_name
-
-
-    def hold_matrix(self):
-        """Return driver holdMatrix name for the driven object
+        invalid = [attr for attr in attribute_list if not verification.is_attribute_api(attr)]
+        if invalid:
+            raise ValueError(f"Invalid attributes detected: {invalid}")
 
 
-        Example:
-            self.driven = driven_obj
-            self.driver = driver_obj
-            constraint_type = "parent"
+    @staticmethod
+    def _index_validation(matrix_node: str, index: Optional[int]) -> None:
+        """Validate that an index is provided for a matrix node connection.
 
-            return hold_driven_obj_pconstrainedby_driver_obj
+        Args:
+            matrix_node (str): The name of the matrix node.
+            index (Optional[int]): The index value to validate.
 
-        Return:
-            str: Name of the holdMatrix
+        Raises:
+            ValueError: If `index` is None.
         """
-        hold_matrix_name = f"holdMatrix_{self.driven}_{self.constraining_name}_{self.driver}"
-        cmds.createNode("holdMatrix", name=hold_matrix_name)
-
-        return hold_matrix_name
+        if index is None:
+            raise ValueError(f"Index required for node {matrix_node}")
 
 
-    def decompose_matrix(self):
-        """Return driver decomposeMatrix name for the driven object
+    @staticmethod
+    def _driver_name(driver: Union[str, List[str]]) -> str:
+        """Get a formatted driver name for node naming.
 
+        Args:
+            driver (str | list[str]): The driver name or list of name parts.
 
-        Example:
-            self.driven = driven_obj
-            self.driver = driver_obj
-            constraint_type = "parent"
-
-            return decomposeMatrix_driven_obj_pconstrainedby_driver_obj
-
-        Return:
-            str: Name of the decomposeMatrix
+        Returns:
+            str: A single driver name string.
         """
-        decompose_matrix_name = f"decomposeMatrix_{self.driven}_{self.constraining_name}_{self.driver}"
-        cmds.createNode("decomposeMatrix", name=decompose_matrix_name)
-
-        return decompose_matrix_name
+        return driver if isinstance(driver, str) else "_".join(driver)
 
 
-    def compose_matrix(self):
-        """Return driver composeMatrix name for the driven object
+    def _create_matrix_node(self, node_type: str, driver: str) -> str:
+        """Create a Maya matrix-related node for the given driver.
 
+        Args:
+            node_type (str): The Maya node type to create (e.g., "multMatrix").
+            driver (str): The name of the driver node.
 
-        Example:
-            self.driven = driven_obj
-            self.driver = driver_obj
-            constraint_type = "parent"
-
-            return composeMatrix_driven_obj_pconstrainedby_driver_obj
-
-        Return:
-            str: Name of the composeMatrix
+        Returns:
+            str: The name of the created matrix node.
         """
-        compose_matrix_name = f"composeMatrix_{self.driven}_{self.constraining_name}_{self.driver}"
-        cmds.createNode("composeMatrix", name=compose_matrix_name)
-
-        return compose_matrix_name
-
-
-    def get_out_matrix(self, matrix_node):
-        """Return the out attribute of the matrix
+        node_name = f"{node_type.lower()}_{self.driven}_{self.constraining_name}_{self._driver_name(driver)}"
+        node = cmds.createNode(node_type, name=node_name)
+        return node
 
 
-        Example:
-            matrix_node = "multMatrix"
+    def mult_matrix(self, driver: str) -> str:
+        """Create a multMatrix node for the given driver.
 
-            return "multMatrix.matrixSum"
+        Args:
+            driver (str): The name of the driver node.
 
-        Return:
-            str: Complete name of the out matrix
+        Returns:
+            str: The name of the created multMatrix node.
+        """
+        return self._create_matrix_node("multMatrix", driver)
+
+
+    def hold_matrix(self, driver: str) -> str:
+        """Create a holdMatrix node for the given driver.
+
+        Args:
+            driver (str): The name of the driver node.
+
+        Returns:
+            str: The name of the created holdMatrix node.
+        """
+        return self._create_matrix_node("holdMatrix", driver)
+
+
+    def decompose_matrix(self, driver: str) -> str:
+        """Create a decomposeMatrix node for the given driver.
+
+        Args:
+            driver (str): The name of the driver node.
+
+        Returns:
+            str: The name of the created decomposeMatrix node.
+        """
+        return self._create_matrix_node("decomposeMatrix", driver)
+
+
+    def compose_matrix(self, driver: str) -> str:
+        """Create a composeMatrix node for the given driver.
+
+        Args:
+            driver (str): The name of the driver node.
+
+        Returns:
+            str: The name of the created composeMatrix node.
+        """
+        return self._create_matrix_node("composeMatrix", driver)
+
+
+    def get_out_matrix(self, matrix_node: str) -> str:
+        """Get the output matrix attribute name for a given matrix node.
+
+        Args:
+            matrix_node (str): The name of the matrix node.
+
+        Returns:
+            str: The full output attribute path (e.g., "multMatrix.matrixSum").
+
+        Raises:
+            ValueError: If the provided node is not a valid matrix node.
         """
         if "matrix" in nodes.get_node_type(matrix_node.lower()):
 
@@ -151,20 +193,22 @@ class Matrix:
 
         else:
 
-            cmds.error("DETECTED ISSUE : Submitted node isn't a matrix node")
+            raise ValueError(f"Invalid matrix node : {matrix_node}")
 
 
-    def get_in_matrix(self, matrix_node:str, index:int=None)->str:
-        """Return the in attribute of the matrix
+    def get_in_matrix(self, matrix_node: str, index: Optional[int] = None) -> str:
+        """
+        Get the input matrix attribute name for a given matrix node.
 
+        Args:
+            matrix_node (str): The name of the matrix node.
+            index (int | None): The index for the input if applicable.
 
-        Example:
-            matrix_node = "multMatrix"
+        Returns:
+            str: The full input attribute path (e.g., "multMatrix.matrixIn[0]").
 
-            return "multMatrix.matrixSum"
-
-        Return:
-            str: Complete name of the in matrix
+        Raises:
+            ValueError: If the node is invalid or index is missing where required.
         """
 
         if "matrix" in nodes.get_node_type(matrix_node.lower()):
@@ -173,9 +217,11 @@ class Matrix:
                 return f"{matrix_node}.inMatrix"
 
             elif verification.is_multmatrix(matrix_node) or verification.is_addmatrix(matrix_node):
+                self._index_validation(matrix_node, index)
                 return f"{matrix_node}.matrixIn[{index}]"
 
             elif verification.is_blendmatrix(matrix_node) or verification.is_parentmatrix(matrix_node):
+                self._index_validation(matrix_node, index)
                 return f"{matrix_node}.target[{index}].targetMatrix"
 
             else:
@@ -183,39 +229,33 @@ class Matrix:
 
         else:
 
-            cmds.error("DETECTED ISSUE : Submitted node isn't a matrix node")
+            raise ValueError(f"Invalid matrix node : {matrix_node}")
 
 
-    @staticmethod
-    def attribute_validation(attribute_list: list):
-        """Verify submitted attributes"""
-        for attr in attribute_list:
-             if verification.is_attribute_api(attr):
-                 continue
-             else:
-                 cmds.error(f"DETECTED ISSUE : Submitted node {attr} aren't valid attributes to connect")
-                 break
+    def connect_matrix(self, source: str, target: str) -> None:
+        """Connect one matrix attribute to another.
 
+        Args:
+            source (str): The source attribute (e.g., "multMatrix.matrixSum").
+            target (str): The target attribute (e.g., "object.offsetParentMatrix").
 
-    def connect_matrix(self, in_matrix, out_matrix):
-        """Connect two attributes together
-
-        Example:
-            in_matrix = "multMatrix.matrixSum"
-            out_matrix = "object.offsetParentMatrix"
+        Raises:
+            ValueError: If either attribute is invalid.
         """
-        self.attribute_validation([in_matrix, out_matrix])
+        self._attribute_validation([source, target])
 
-        cmds.connectAttr(in_matrix, out_matrix)
+        cmds.connectAttr(source, target)
 
+    def disconnect_matrix(self, source: str, target: str) -> None:
+        """Disconnect one matrix attribute from another.
 
-    def disconnect_matrix(self, in_matrix, out_matrix):
-        """Disconnect two attributes
+        Args:
+            source (str): The source attribute (e.g., "multMatrix.matrixSum").
+            target (str): The target attribute (e.g., "object.offsetParentMatrix").
 
-        Example:
-            in_matrix = "multMatrix.matrixSum"
-            out_matrix = "object.offsetParentMatrix"
+        Raises:
+            ValueError: If either attribute is invalid.
         """
-        self.attribute_validation([in_matrix, out_matrix])
+        self._attribute_validation([source, target])
 
-        cmds.disconnectAttr(in_matrix, out_matrix)
+        cmds.disconnectAttr(source, target)
