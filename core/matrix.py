@@ -239,6 +239,66 @@ class Matrix:
             raise ValueError(f"Invalid matrix node : {matrix_node}")
 
 
+    @staticmethod
+    def get_world_matrix(matrix_node: str) -> str:
+        """
+        Get the worldMatrix attribute name for a given matrix node.
+
+        Args:
+            matrix_node (str): The name of the matrix node.
+
+        Returns:
+            str: The full worldMatrix attribute path (e.g., "cube1.worldMatrix[0]").
+
+        Raises:
+            ValueError: If the worldMatrix attribute is missing.
+        """
+        if not cmds.attributeQuery('worldMatrix', node=matrix_node, exists=True):
+            raise ValueError(f"Submitted node {matrix_node} does not contain a worldMatrix attribute")
+
+        return f"{matrix_node}.worldMatrix[0]"
+
+
+    @staticmethod
+    def get_inverse_world_matrix(matrix_node: str) -> str:
+        """
+        Get the worldInverseMatrix attribute name for a given matrix node.
+
+        Args:
+            matrix_node (str): The name of the matrix node.
+
+        Returns:
+            str: The full worldInverseMatrix attribute path (e.g., "cube1.worldMatrix[0]").
+
+        Raises:
+            ValueError: If the worldInverseMatrix attribute is missing.
+        """
+        if not cmds.attributeQuery('worldInverseMatrix', node=matrix_node, exists=True):
+            raise ValueError(f"Submitted node {matrix_node} does not contain a worldInverseMatrix attribute")
+
+        return f"{matrix_node}.worldInverseMatrix[0]"
+
+
+    @staticmethod
+    def get_offset_parent_matrix(matrix_node: str) -> str:
+        """
+        Get the offsetParentMatrix attribute name for a given matrix node.
+
+        Args:
+            matrix_node (str): The name of the matrix node.
+
+        Returns:
+            str: The full offsetParentMatrix attribute path (e.g., "cube1.offsetParentMatrix").
+
+        Raises:
+            ValueError: If the offsetParentMatrix attribute is missing.
+        """
+        if not cmds.attributeQuery('offsetParentMatrix', node=matrix_node, exists=True):
+            raise ValueError(f"Submitted node {matrix_node} does not contain a offsetParentMatrix attribute")
+
+        return f"{matrix_node}.offsetParentMatrix"
+
+
     def connect_matrix(self, source: str, target: str) -> None:
         """Connect one matrix attribute to another.
 
