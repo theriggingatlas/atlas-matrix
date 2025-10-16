@@ -20,9 +20,7 @@ To do : adding get_world_matrix, get_inverse_world_matrix, get_offset_parent_mat
 from typing import Optional, List, Union
 
 import maya.cmds as cmds
-
 from core.utils import nodes
-from core.utils import attributes
 from core.utils import transform
 from core.utils import verification
 
