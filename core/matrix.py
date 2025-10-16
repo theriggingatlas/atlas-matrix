@@ -12,7 +12,6 @@ Company: The Rigging Atlas
 Website: theriggingatlas.com
 Created: 2025
 
-To do : adding get_world_matrix, get_inverse_world_matrix, get_offset_parent_matrix
 """
 
 # ---------- IMPORT ----------
