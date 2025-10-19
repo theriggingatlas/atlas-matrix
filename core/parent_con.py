@@ -61,11 +61,39 @@ class ParentCon(Matrix):
         Returns:
             str: Hold matrix name.
         """
-        node_multmatrix = "tmp_multmatrix"
+        node_hold = self.mult_matrix(driver)
 
-        out_multmatrix = self.matrix_node.mult_matrix([attributes.get_world_matrix(constrained), attributes.get_world_inverse_matrix(constrainer)], name=node_multmatrix)
-        self.matrix_node.hold_matrix(input=node_multmatrix, name=name_hold_matrix)
+        in_hold = self.get_in_matrix(node_hold)
+        out_hold = self.get_out_matrix(node_hold)
 
-        self.disconnect_input(attributes.get_in_matrix(name_hold_matrix))
-        cmds.delete(node_multmatrix)
-        return f"{name_hold_matrix}.outMatrix"
+        return node_hold, in_hold, out_hold
+
+
+    def con_mult_matrix(self, driver: str) -> str:
+        """
+        Create a mult matrix node to constrain object.
+
+        Returns:
+            str: mult matrix name.
+        """
+        node_mult = self.mult_matrix(driver)
+
+        in_mult = self.get_in_matrix(node_mult)
+        out_mult = self.get_out_matrix(node_mult)
+
+        return node_mult, in_mult, out_mult
+
+
+    def con_blend_matrix(self):
+        """
+        Create a blend matrix node to blend constrained objects.
+
+        Returns:
+            str: blend matrix name.
+        """
+        node_blend = self.blend_matrix()
+
+        in_blend = self.get_in_matrix(node_blend)
+        out_blend = self.get_out_matrix(node_blend)
+
+        return node_blend, in_blend, out_blend
