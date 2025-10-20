@@ -115,3 +115,17 @@ IG: [@theriggingatlas](https://instagram.com/theriggingatlas) or [@clementdaures
 
 This tool is distributed as-is for non-commercial use.  
 For commercial licensing or contributions, please contact the author directly.
+
+--
+
+## TO DO
+
+offset method
+compose matrix method
+decompose matrix method
+pick matrix method
+mult constraint method
+blend constraint method
+ui getter
+ui setter maya
+plugin installer

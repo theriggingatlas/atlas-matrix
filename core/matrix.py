@@ -11,7 +11,6 @@ Author: Clement Daures
 Company: The Rigging Atlas
 Website: theriggingatlas.com
 Created: 2025
-
 """
 
 # ---------- IMPORT ----------
