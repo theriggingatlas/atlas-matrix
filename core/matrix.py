@@ -20,7 +20,7 @@ from typing import Optional, List, Union
 
 import maya.cmds as cmds
 from core.utils import nodes
-from core.utils import transform
+from core.utils import attributes
 from core.utils import verification
 
 
@@ -80,25 +80,26 @@ class Matrix:
         if invalid:
             raise ValueError(f"Invalid attributes detected: {invalid}")
 
-    @staticmethod
-    def _attribute_have_same_datatype(attr_a, attr_b):
+
+    def _attribute_have_same_datatype(self, attribute_a: str, attribute_b: str) -> str:
         """
         Compare whether two attributes share the same data type (shape + element type).
 
         Args:
-            attr_a (str): The first attribute path in the form "nodeA.attr".
-            attr_b (str): The second attribute path in the form "nodeB.attr".
+            attribute_a (str): The first attribute path in the form "nodeA.attr".
+            attribute_b (str): The second attribute path in the form "nodeB.attr".
 
         Returns:
             bool: True if both attributes have identical type signatures (including
                 arrays and compound structures), otherwise False.
         """
-        try:
-            sig_a = _attr_signature(attr_a)
-            sig_b = _attr_signature(attr_b)
-            return sig_a == sig_b
-        except Exception:
-            return False
+        attributes = [attribute_a, attribute_b]
+        self._attribute_validation(attributes)
+
+        datatype_a = cmds.getAttr(attribute_a, type=True)
+        datatype_b = cmds.getAttr(attribute_b, type=True)
+
+        return datatype_a == datatype_b
 
 
     @staticmethod
@@ -428,12 +429,22 @@ class Matrix:
         Args:
             get_attribute(str): the attribute to get the value from
             set_attribute(str): the attribute to set the value to
-
-        Returns:
-            str: name of the set attribute.
         """
-        attributes = [get_attribute, set_attribute]
-        self._attribute_validation(attributes)
+        self._attribute_have_same_datatype(get_attribute,set_attribute)
 
         cmds.getAttr(get_attribute)
         cmds.setAttr(set_attribute, get_attribute)
+
+
+    def connect_attr(self, source_attribute: str, target_attribute: str) -> str:
+        """
+        Connect a source attribute to a target attribute
+
+        Args:
+            source_attribute(str): the attribute with the source connection
+            target_attribute(str): the attribute with the target connection
+
+        """
+        self._attribute_have_same_datatype(source_attribute, target_attribute)
+
+        cmds.connectAttr(source_attribute, target_attribute)
