@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Utilities functions that allow verifying identity of object
 
 Author: Clement Daures

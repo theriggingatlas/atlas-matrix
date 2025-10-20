@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """ Utilities functions that facilitates node manipulation inside Maya
 
 Author: Clement Daures

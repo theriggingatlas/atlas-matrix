@@ -80,6 +80,26 @@ class Matrix:
         if invalid:
             raise ValueError(f"Invalid attributes detected: {invalid}")
 
+    @staticmethod
+    def _attribute_have_same_datatype(attr_a, attr_b):
+        """
+        Compare whether two attributes share the same data type (shape + element type).
+
+        Args:
+            attr_a (str): The first attribute path in the form "nodeA.attr".
+            attr_b (str): The second attribute path in the form "nodeB.attr".
+
+        Returns:
+            bool: True if both attributes have identical type signatures (including
+                arrays and compound structures), otherwise False.
+        """
+        try:
+            sig_a = _attr_signature(attr_a)
+            sig_b = _attr_signature(attr_b)
+            return sig_a == sig_b
+        except Exception:
+            return False
+
 
     @staticmethod
     def _index_validation(matrix_node: str, index: Optional[int] = None) -> None:
@@ -324,3 +344,96 @@ class Matrix:
         self._attribute_validation([source, target])
 
         cmds.disconnectAttr(source, target)
+
+
+    def con_hold_matrix(self, driver: str) -> str:
+        """
+        Create a hold matrix node to maintain offset between objects.
+
+        Returns:
+            str: Hold matrix name.
+        """
+        node_hold = self.mult_matrix(driver)
+
+        in_hold = self.get_in_matrix(node_hold)
+        out_hold = self.get_out_matrix(node_hold)
+
+        return node_hold, in_hold, out_hold
+
+
+    def con_mult_matrix(self, driver: str) -> str:
+        """
+        Create a mult matrix node to constrain object.
+
+        Returns:
+            str: mult matrix name.
+        """
+        node_mult = self.mult_matrix(driver)
+
+        in_mult = self.get_in_matrix(node_mult)
+        out_mult = self.get_out_matrix(node_mult)
+
+        return node_mult, in_mult, out_mult
+
+
+    def con_blend_matrix(self):
+        """
+        Create a blend matrix node to blend constrained objects.
+
+        Returns:
+            str: blend matrix name.
+        """
+        node_blend = self.blend_matrix()
+
+        in_blend = self.get_in_matrix(node_blend)
+        out_blend = self.get_out_matrix(node_blend)
+
+        return node_blend, in_blend, out_blend
+
+
+    def con_compose_matrix(self):
+        """
+        Create a compose matrix node to compose constrained objects.
+
+        Returns:
+            str: compose matrix name.
+        """
+        node_compose = self.compose_matrix()
+
+        in_compose = self.get_in_matrix(node_compose)
+        out_compose = self.get_out_matrix(node_compose)
+
+        return node_compose, in_compose, out_compose
+
+
+    def con_decompose_matrix(self):
+        """
+        Create a decompose matrix node to decompose constrained objects.
+
+        Returns:
+            str: decompose matrix name.
+        """
+        node_decompose = self.decompose_matrix()
+
+        in_decompose = self.get_in_matrix(node_decompose)
+        out_decompose = self.get_out_matrix(node_decompose)
+
+        return node_decompose, in_decompose, out_decompose
+
+
+    def get_set_attr(self, get_attribute: str, set_attribute: str) -> str:
+        """
+        Get the value of a given attribute and set it to the given set_attribute
+
+        Args:
+            get_attribute(str): the attribute to get the value from
+            set_attribute(str): the attribute to set the value to
+
+        Returns:
+            str: name of the set attribute.
+        """
+        attributes = [get_attribute, set_attribute]
+        self._attribute_validation(attributes)
+
+        cmds.getAttr(get_attribute)
+        cmds.setAttr(set_attribute, get_attribute)
