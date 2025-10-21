@@ -44,7 +44,8 @@ class ParentCon(Matrix):
         shear_all (bool): Enable shear filter on constraint.
     """
     def __init__(self, driven: Optional[str] = None, drivers: Optional[List[str]] = None):
-        """Initialize the ParentCon constraint setup.
+        """
+        Initialize the ParentCon constraint setup.
 
         Args:
             driven (Optional[str]): The name of the driven object.
@@ -52,5 +53,16 @@ class ParentCon(Matrix):
         """
         super().__init__(driven, drivers)
         self.constraint_type="parent"
+
+
+    def create_offset(self, offset: bool):
+        """
+        Create the wanted offset type
+
+        Args:
+            offset (bool): If offset is wanted or not.
+        """
+
+
 
 
