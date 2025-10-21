@@ -435,6 +435,16 @@ class Matrix:
         cmds.setAttr(set_attribute, get_attribute)
 
 
+    def get_parent_driven(self):
+        """
+        Get the parent of the driven node
+
+        Returns:
+            str: parent of the self.driven node
+        """
+        return cmds.listRelatives(self.driven, parent=True)
+
+
     def connect_attr(self, source_attribute: str, target_attribute: str) -> str:
         """
         Connect a source attribute to a target attribute
