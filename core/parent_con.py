@@ -14,7 +14,7 @@ Created: 2025
 # ---------- IMPORT ----------
 
 
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Tuple
 
 from core.matrix import Matrix
 
@@ -53,20 +53,39 @@ class ParentCon(Matrix):
         """
         super().__init__(driven, drivers)
         self.constraint_type="parent"
-        self.offset = ""
-        self.keep_hold = ""
+        self.offset = False
+        self.keep_hold = False
+        self.envelope = False
 
 
-    def create_offset(self, driver: str, mult_in: List[str], mult_tmp_out: str):
+    def _mount_offset(self, driver: str, mult_tmp: List[str]):
+        """
+        Mount the necessary setup for the offset system
+
+        Args:
+            driver (str): The name of the driver object
+            mult_tmp(List[str]): list of the temporary multMatrix
+        """
+        mult_node, mult_in, mult_out = mult_tmp[0], mult_tmp[1], mult_tmp[2]
+
+        self.connect_attr(self.get_world_matrix(self.driven), mult_in[0])
+        self.connect_attr(self.get_inverse_world_matrix(driver), mult_in[1])
+
+
+    def create_offset(self, driver: str, mult: List[str], mult_tmp: List[str]):
         """
         Create the wanted offset type
 
         Args:
             driver (str): The name of the driver object name
-            mult_in List[str]: If offset is wanted or not.
-            mult_tmp_out (str): If the offset need to keep the hold or not
+            mult(List[str]): If offset is wanted or not.
+            mult_tmp(List[str]): If the offset need to keep the hold or not
         """
+        mult_node, mult_in, mult_out = mult[0], mult[1], mult[2]
+        mult_tmp_node, mult_tmp_in, mult_tmp_out = mult_tmp[0], mult_tmp[1], mult_tmp[2]
+
         if self.offset:
+            self._mount_offset(driver, mult_tmp)
             if self.keep_hold:
                 hold_node, hold_in, hold_out = self.hold_matrix(driver)
                 self.get_set_attr(mult_tmp_out, hold_in)
@@ -75,6 +94,31 @@ class ParentCon(Matrix):
                 self.get_set_attr(mult_tmp_out, mult_in[0])
         else:
             pass
+
+
+    def create_blend(self, mult_list: List[str]) -> Union[Tuple[str, str, str, str] | None]:
+        """
+        Create a blendMatrix if needed
+
+        Args:
+            mult_list(List[str]): list of the mult to connect to the blendMatrix
+
+        Returns:
+            blend_node(str) : name of the blendMatrix node
+            blend_input(str) : inputMatrix attribute of the blendMatrix node
+            blend_in(str) : target[index].targetMatrix attribute of the blendMatrix node
+            blend_out(str) : outputMatrix attribute of the blendMatrix node
+        """
+        blend_node, blend_input, blend_in, blend_out = self.con_blend_matrix()
+
+        if self.envelope:
+            self.get_set_attr(self.get_matrix(self.driven), blend_input)
+
+        for index, mult in enumerate, mult_list:
+            mult_out = mult[2]
+            self.connect_attr(mult_out, blend_in[index])
+
+        return blend_node, blend_input, blend_in, blend_out
 
 
     def create_compose(self):
@@ -122,11 +166,13 @@ class ParentCon(Matrix):
                 self.connect_attr(self.get_world_matrix(driver), mult_in[1])
                 self.connect_attr(parent_inverse, mult_in[2])
 
-                self.connect_attr(mult_out, self.get_offset_parent_matrix(self.driven))
-
                 if self.offset:
                     for mult_tmp in mult_tmp_list:
                         mult_tmp_node, mult_tmp_in, mult_tmp_out = mult_tmp[0], mult_tmp[1], mult_tmp[2]
                         self.create_offset(driver, mult_in, mult_tmp_out)
 
-
+        if len(self.drivers) > 1 or self.envelope:
+            blend_node, blend_input, blend_in, blend_out = self.create_blend(mult_list)
+            self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
+        else:
+            self.connect_attr(mult_list[0][2], self.get_offset_parent_matrix(self.driven))

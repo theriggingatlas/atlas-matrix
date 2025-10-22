@@ -257,6 +257,26 @@ class Matrix:
 
 
     @staticmethod
+    def get_matrix(matrix_node: str) -> str:
+        """
+        Get the matrix attribute name for a given matrix node.
+
+        Args:
+            matrix_node (str): The name of the matrix node.
+
+        Returns:
+            str: The full matrix attribute path (e.g., "cube1.matrix").
+
+        Raises:
+            ValueError: If the matrix attribute is missing.
+        """
+        if not cmds.attributeQuery('matrix', node=matrix_node, exists=True):
+            raise ValueError(f"Submitted node {matrix_node} does not contain a matrix attribute")
+
+        return f"{matrix_node}.matrix"
+
+
+    @staticmethod
     def get_world_matrix(matrix_node: str) -> str:
         """
         Get the worldMatrix attribute name for a given matrix node.
