@@ -120,11 +120,10 @@ For commercial licensing or contributions, please contact the author directly.
 
 ## TO DO
 
-offset method
+debug all the functions
 compose matrix method
 decompose matrix method
 pick matrix method
-mult constraint method
 blend constraint method
 ui getter
 ui setter maya
