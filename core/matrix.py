@@ -15,7 +15,7 @@ Created: 2025
 
 # ---------- IMPORT ----------
 
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Tuple, Callable
 
 import maya.cmds as cmds
 from core.utils import nodes
@@ -166,6 +166,19 @@ class Matrix:
             str: The name of the created holdMatrix node.
         """
         return self._create_matrix_node("holdMatrix", driver)
+
+
+    def blend_matrix(self, driver: str = "") -> str:
+        """Create a blendMatrix node for the given driver.
+
+        Args:
+            driver (str): The name of the driver node.
+
+        Returns:
+            str: The name of the created blendMatrix node.
+        """
+        name = f"blendMatrix_{self.driven}_{self.constraining_name}"
+        return cmds.createNode("blendMatrix", name=name)
 
 
     def decompose_matrix(self, driver: str) -> str:
@@ -366,14 +379,14 @@ class Matrix:
         cmds.disconnectAttr(source, target)
 
 
-    def con_hold_matrix(self, driver: str) -> str:
+    def con_hold_matrix(self, driver: str) -> Tuple[str, str, str]:
         """
         Create a hold matrix node to maintain offset between objects.
 
         Returns:
             str: Hold matrix name.
         """
-        node_hold = self.mult_matrix(driver)
+        node_hold = self.hold_matrix(driver)
 
         in_hold = self.get_in_matrix(node_hold)
         out_hold = self.get_out_matrix(node_hold)
@@ -381,34 +394,37 @@ class Matrix:
         return node_hold, in_hold, out_hold
 
 
-    def con_mult_matrix(self, driver: str) -> str:
+    def con_mult_matrix(self, driver: str) -> Tuple[str, Callable[[int], str], str]:
         """
         Create a mult matrix node to constrain object.
 
         Returns:
-            str: mult matrix name.
+            Tuple[str, Callable[[int], str], str]: mult matrix name.
         """
         node_mult = self.mult_matrix(driver)
 
-        in_mult = self.get_in_matrix(node_mult)
+        def in_mult(i: int) -> str:
+            return f"{node_mult}.matrixIn[{i}]"
+
         out_mult = self.get_out_matrix(node_mult)
 
         return node_mult, in_mult, out_mult
 
 
-    def con_blend_matrix(self):
+    def con_blend_matrix(self) -> Tuple[str, str, Callable[[int], str], str]:
         """
         Create a blend matrix node to blend constrained objects.
 
         Returns:
-            str: blend matrix name.
+            Tuple[str, str, Callable[[int], str], str]: blend matrix name.
         """
         node_blend = self.blend_matrix()
-
-        in_blend = self.get_in_matrix(node_blend)
+        input_blend = f"{node_blend}.inputMatrix"
+        def in_blend(i: int) -> str:
+            return f"{node_blend}.target[{i}].targetMatrix"
         out_blend = self.get_out_matrix(node_blend)
 
-        return node_blend, in_blend, out_blend
+        return node_blend, input_blend, in_blend, out_blend
 
 
     def con_compose_matrix(self):

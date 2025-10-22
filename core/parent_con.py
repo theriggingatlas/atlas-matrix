@@ -14,7 +14,7 @@ Created: 2025
 # ---------- IMPORT ----------
 
 
-from typing import Optional, List, Union, Tuple
+from typing import Optional, List, Union, Tuple, Callable
 
 from core.matrix import Matrix
 
@@ -58,45 +58,42 @@ class ParentCon(Matrix):
         self.envelope = False
 
 
-    def _mount_offset(self, driver: str, mult_tmp: List[str]):
+    def _mount_offset(self, driver: str):
         """
         Mount the necessary setup for the offset system
 
         Args:
             driver (str): The name of the driver object
-            mult_tmp(List[str]): list of the temporary multMatrix
         """
-        mult_node, mult_in, mult_out = mult_tmp[0], mult_tmp[1], mult_tmp[2]
+        mult_tmp_node, mult_tmp_in, mult_tmp_out = self.con_mult_matrix(f"tmp_{driver}")
 
-        self.connect_attr(self.get_world_matrix(self.driven), mult_in[0])
-        self.connect_attr(self.get_inverse_world_matrix(driver), mult_in[1])
+        self.connect_attr(self.get_world_matrix(self.driven), mult_tmp_in(0))
+        self.connect_attr(self.get_inverse_world_matrix(driver), mult_tmp_in(1))
+
+        return mult_tmp_node, mult_tmp_in, mult_tmp_out
 
 
-    def create_offset(self, driver: str, mult: List[str], mult_tmp: List[str]):
+    def create_offset(self, driver: str, mult_in: Callable[[int], str]):
         """
         Create the wanted offset type
 
         Args:
             driver (str): The name of the driver object name
-            mult(List[str]): If offset is wanted or not.
-            mult_tmp(List[str]): If the offset need to keep the hold or not
+            mult_in(str): The in attribute of the multMatrix with great index.
         """
-        mult_node, mult_in, mult_out = mult[0], mult[1], mult[2]
-        mult_tmp_node, mult_tmp_in, mult_tmp_out = mult_tmp[0], mult_tmp[1], mult_tmp[2]
-
         if self.offset:
-            self._mount_offset(driver, mult_tmp)
+            mult_tmp_node, mult_tmp_in, mult_tmp_out = self._mount_offset(driver)
             if self.keep_hold:
                 hold_node, hold_in, hold_out = self.hold_matrix(driver)
                 self.get_set_attr(mult_tmp_out, hold_in)
-                self.connect_attr(hold_out, mult_in[0])
+                self.connect_attr(hold_out, mult_in(0))
             else:
-                self.get_set_attr(mult_tmp_out, mult_in[0])
+                self.get_set_attr(mult_tmp_out, mult_in(0))
         else:
             pass
 
 
-    def create_blend(self, mult_list: List[str]) -> Union[Tuple[str, str, str, str] | None]:
+    def create_blend(self, mult_list: List[str]) -> Tuple[str, str, str, str]:
         """
         Create a blendMatrix if needed
 
@@ -128,51 +125,26 @@ class ParentCon(Matrix):
         pass
 
 
-    def create_mult_matrix(self):
-        """
-        Create multMatrix for constraint
-        """
-        mult_list = []
-        mult_tmp_list = []
-
-        for driver in self.drivers:
-
-            mult_node, mult_in, mult_out = self.mult_matrix(driver)
-            driver_mult_list = [mult_node, mult_in, mult_out]
-            mult_list.append(driver_mult_list)
-
-            if self.offset:
-                mult_tmp_node, mult_tmp_in, mult_tmp_out = self.mult_matrix(driver)
-                driver_mult_tmp_list = [mult_tmp_node, mult_tmp_in, mult_tmp_out]
-                mult_tmp_list.append(driver_mult_tmp_list)
-
-        return mult_list, mult_tmp_list
-
-
     def _mount_system(self):
         """
         Internal setup to create the constraint chain and connect it.
         """
-        mult_list, mult_tmp_list = self.create_mult_matrix()
-
         parent_node = self.get_parent_driven()[0]
         parent_inverse = self.get_inverse_world_matrix(parent_node)
 
-        for mult in mult_list:
+        mult_nodes = []
 
-            mult_node, mult_in, mult_out = mult[0], mult[1], mult[2]
+        for index, driver in enumerate(self.drivers):
+            mult_node, mult_in, mult_out = self.con_mult_matrix(driver)
+            self.connect_attr(self.get_world_matrix(driver), mult_in(1))
+            self.connect_attr(parent_inverse, mult_in(2))
 
-            for driver in self.drivers:
-                self.connect_attr(self.get_world_matrix(driver), mult_in[1])
-                self.connect_attr(parent_inverse, mult_in[2])
+            self.create_offset(driver, mult_in)
 
-                if self.offset:
-                    for mult_tmp in mult_tmp_list:
-                        mult_tmp_node, mult_tmp_in, mult_tmp_out = mult_tmp[0], mult_tmp[1], mult_tmp[2]
-                        self.create_offset(driver, mult_in, mult_tmp_out)
+            mult_nodes.append(mult_node)
 
         if len(self.drivers) > 1 or self.envelope:
-            blend_node, blend_input, blend_in, blend_out = self.create_blend(mult_list)
+            blend_node, blend_input, blend_in, blend_out = self.create_blend(mult_nodes)
             self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
         else:
-            self.connect_attr(mult_list[0][2], self.get_offset_parent_matrix(self.driven))
+            self.connect_attr(mult_nodes[0], self.get_offset_parent_matrix(self.driven))
