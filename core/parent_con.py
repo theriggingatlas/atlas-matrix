@@ -29,19 +29,6 @@ class ParentCon(Matrix):
     This constraint system uses multMatrix, decomposeMatrix, and optionally
     pickMatrix, holdMatrix, and blendMatrix nodes for precise control over
     transformations.
-
-    Attributes:
-        object_list (list): List of selected objects. Last is the constrained.
-        translate_blend_matrix (float): Blend weight for translation.
-        rotate_blend_matrix (float): Blend weight for rotation.
-        scale_blend_matrix (float): Blend weight for scale.
-        offset (bool): Whether to maintain offset between objects.
-        hold (bool): Whether to keep initial offset in place using holdMatrix.
-        pick_matrix (bool): Whether to use pickMatrix for filtering transformations.
-        translate_all (bool): Enable translation filter on constraint.
-        rotate_all (bool): Enable rotation filter on constraint.
-        scale_all (bool): Enable scale filter on constraint.
-        shear_all (bool): Enable shear filter on constraint.
     """
     def __init__(self, driven: Optional[str] = None, drivers: Optional[List[str]] = None):
         """
@@ -56,6 +43,22 @@ class ParentCon(Matrix):
         self.offset = False
         self.keep_hold = False
         self.envelope = False
+
+        self.translate_x = ""
+        self.translate_y = ""
+        self.translate_z = ""
+
+        self.rotate_x = ""
+        self.rotate_y = ""
+        self.rotate_z = ""
+
+        self.scale_x = ""
+        self.scale_y = ""
+        self.scale_z = ""
+
+        self.shear_x = ""
+        self.shear_y = ""
+        self.shear_z = ""
 
 
     def _mount_offset(self, driver: str):
@@ -93,31 +96,6 @@ class ParentCon(Matrix):
             pass
 
 
-    def create_blend(self, mult_list: List[str]) -> Tuple[str, str, str, str]:
-        """
-        Create a blendMatrix if needed
-
-        Args:
-            mult_list(List[str]): list of the mult to connect to the blendMatrix
-
-        Returns:
-            blend_node(str) : name of the blendMatrix node
-            blend_input(str) : inputMatrix attribute of the blendMatrix node
-            blend_in(str) : target[index].targetMatrix attribute of the blendMatrix node
-            blend_out(str) : outputMatrix attribute of the blendMatrix node
-        """
-        blend_node, blend_input, blend_in, blend_out = self.con_blend_matrix()
-
-        if self.envelope:
-            self.get_set_attr(self.get_matrix(self.driven), blend_input)
-
-        for index, mult in enumerate, mult_list:
-            mult_out = mult[2]
-            self.connect_attr(mult_out, blend_in[index])
-
-        return blend_node, blend_input, blend_in, blend_out
-
-
     def create_compose(self):
         """
         Create a composeMatrix if needed
@@ -132,7 +110,7 @@ class ParentCon(Matrix):
         parent_node = self.get_parent_driven()[0]
         parent_inverse = self.get_inverse_world_matrix(parent_node)
 
-        mult_nodes = []
+        mult_outs = []
 
         for index, driver in enumerate(self.drivers):
             mult_node, mult_in, mult_out = self.con_mult_matrix(driver)
@@ -141,10 +119,12 @@ class ParentCon(Matrix):
 
             self.create_offset(driver, mult_in)
 
-            mult_nodes.append(mult_node)
+            mult_outs.append(mult_out)
 
         if len(self.drivers) > 1 or self.envelope:
-            blend_node, blend_input, blend_in, blend_out = self.create_blend(mult_nodes)
-            self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
+            blend_node, blend_input, blend_in, blend_out = self.con_blend_matrix()
+            for index, mult_out in enumerate(mult_outs):
+                self.connect_attr(mult_outs[index], blend_in(index))
+                self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
         else:
-            self.connect_attr(mult_nodes[0], self.get_offset_parent_matrix(self.driven))
+            self.connect_attr(mult_outs[0], self.get_offset_parent_matrix(self.driven))

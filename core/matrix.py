@@ -27,13 +27,13 @@ from core.utils import verification
 
 
 class Matrix:
-    """Class to create a matrix-based parent constraint in Maya.
+    """
+    Class to create matrix utilities to matrix-based constraint in Maya.
 
     This constraint system uses multMatrix, decomposeMatrix, and optionally
     pickMatrix, holdMatrix, and blendMatrix nodes for precise control over
     transformations.
     """
-
     def __init__(self, driven: Optional[str] = None, drivers: Optional[List[str]] = None) -> None:
         """Initialize the Matrix constraint builder.
 
