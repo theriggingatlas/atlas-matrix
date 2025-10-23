@@ -1,0 +1,275 @@
+from PySide6 import QtWidgets, QtCore
+from PySide6.QtGui import QDoubleValidator
+
+import maya.cmds as cmds
+
+from core.parent_con import ParentCon, AxisFilter, AxisWeights
+from ui.plugin.matrix_parent_con_ui import AtlasMatrixParentUi
+
+
+def _float01(text: str, fallback: float = 1.0) -> float:
+    """
+    Parse a float in [0, 1] from a string, with clamping and fallback.
+
+    Args:
+        text (str): Input text expected to represent a number.
+        fallback (float): Value to return if parsing fails.
+
+    Returns:
+        float: The parsed number clamped to [0.0, 1.0], or `fallback` on error.
+    """
+    try:
+        v = float(text)
+        return max(0.0, min(1.0, v))
+    except Exception:
+        return fallback
+
+
+def _wire_axis_group(all_cb, x_cb, y_cb, z_cb):
+    """
+    Wire an "All" checkbox to enable/disable per-axis checkboxes.
+
+    When the "All" checkbox is checked, X/Y/Z are forced to True and disabled.
+    When it's unchecked, X/Y/Z become user-editable.
+
+    Args:
+        all_cb (QCheckBox): Master "All" checkbox.
+        x_cb (QCheckBox): X-axis checkbox.
+        y_cb (QCheckBox): Y-axis checkbox.
+        z_cb (QCheckBox): Z-axis checkbox.
+    """
+    def on_all_toggled(checked):
+        x_cb.setEnabled(not checked)
+        y_cb.setEnabled(not checked)
+        z_cb.setEnabled(not checked)
+        if checked:
+            x_cb.setChecked(True)
+            y_cb.setChecked(True)
+            z_cb.setChecked(True)
+    all_cb.toggled.connect(on_all_toggled)
+    on_all_toggled(all_cb.isChecked())
+
+
+def _wire_weight_pair(slider, lineedit):
+    """
+    Synchronize a slider (0–100) with a line edit (0.00–1.00).
+
+    The slider represents a percentage (int 0..100). The line edit shows a
+    normalized weight (float 0.00..1.00) with validation and clamping.
+
+    Wiring:
+        - Slider → LineEdit via `valueChanged`
+        - LineEdit → Slider via `editingFinished`
+
+    Args:
+        slider (QSlider): Slider widget to configure and listen to.
+        lineedit (QLineEdit): Line edit that displays the normalized value.
+
+    Side Effects:
+        - Sets a `QDoubleValidator(0.0, 1.0, 3)` on the line edit.
+        - Initializes text to "1.00" if empty and syncs the slider.
+    """
+    slider.setRange(0, 100)
+    lineedit.setValidator(QDoubleValidator(0.0, 1.0, 3, lineedit))
+
+    def s_to_e(val):
+        lineedit.setText(f"{val/100.0:.2f}")
+
+    def e_to_s():
+        slider.setValue(int(_float01(lineedit.text(), 1.0) * 100))
+
+    slider.valueChanged.connect(s_to_e)
+    lineedit.editingFinished.connect(e_to_s)
+
+    if not lineedit.text():
+        lineedit.setText("1.00")
+    e_to_s()
+
+
+def _ui_to_parentcon_kwargs(ui: AtlasMatrixParentUi):
+    """
+    Read UI state and convert it to keyword arguments for `ParentCon`.
+
+    This collects axis filters (All vs X/Y/Z per group) and per-channel weights,
+    as well as general flags (offset, keep_hold, envelope).
+
+    Args:
+        ui (AtlasMatrixParentUi): The instantiated UI containing all widgets.
+
+    Returns:
+        dict: Keyword arguments ready to be expanded into `ParentCon(...)`, with:
+            - offset (bool)
+            - keep_hold (bool)
+            - envelope (bool)
+            - translate_filter (AxisFilter)
+            - rotate_filter (AxisFilter)
+            - scale_filter (AxisFilter)
+            - shear_filter (AxisFilter)
+            - weights (AxisWeights)
+    """
+    t_all = ui.checkbox_parent_translate_all.isChecked()
+    r_all = ui.checkbox_parent_rotate_all.isChecked()
+    s_all = ui.checkbox_parent_scale_all.isChecked()
+    sh_all = ui.checkbox_parent_shear_all.isChecked()
+
+    translate_filter = AxisFilter(
+        x=True if t_all else ui.checkbox_parent_translate_x.isChecked(),
+        y=True if t_all else ui.checkbox_parent_translate_y.isChecked(),
+        z=True if t_all else ui.checkbox_parent_translate_z.isChecked(),
+    )
+    rotate_filter = AxisFilter(
+        x=True if r_all else ui.checkbox_parent_rotate_x.isChecked(),
+        y=True if r_all else ui.checkbox_parent_rotate_y.isChecked(),
+        z=True if r_all else ui.checkbox_parent_rotate_z.isChecked(),
+    )
+    scale_filter = AxisFilter(
+        x=True if s_all else ui.checkbox_parent_scale_x.isChecked(),
+        y=True if s_all else ui.checkbox_parent_scale_y.isChecked(),
+        z=True if s_all else ui.checkbox_parent_scale_z.isChecked(),
+    )
+    shear_filter = AxisFilter(
+        x=True if sh_all else ui.checkbox_parent_shear_x.isChecked(),
+        y=True if sh_all else ui.checkbox_parent_shear_y.isChecked(),
+        z=True if sh_all else ui.checkbox_parent_shear_z.isChecked(),
+    )
+
+    weights = AxisWeights(
+        translate=_float01(ui.lineedit_parent_translate_weight.text() or "1"),
+        rotate=_float01(ui.lineedit_parent_rotate_weight.text() or "1"),
+        scale=_float01(ui.lineedit_parent_scale_weight.text() or "1"),
+        shear=_float01(ui.lineedit_parent_scale_shear_weight.text() or "1"),
+    )
+
+    return dict(
+        offset=ui.checkbox_parent_offset.isChecked(),
+        keep_hold=ui.checkbox_parent_hold.isChecked(),
+        envelope=ui.checkbox_parent_enveloppe.isChecked(),
+        translate_filter=translate_filter,
+        rotate_filter=rotate_filter,
+        scale_filter=scale_filter,
+        shear_filter=shear_filter,
+        weights=weights,
+    )
+
+
+def _delete_existing(object_name: str):
+    """
+    Close and delete any existing widget with a given object name.
+
+    Useful for ensuring a single instance of a dialog in Maya/Qt environments.
+
+    Args:
+        object_name (str): The `QObject.objectName()` to search for.
+
+    Side Effects:
+        - Closes matching widgets and schedules them for deletion.
+    """
+    for w in QtWidgets.QApplication.allWidgets():
+        if w.objectName() == object_name:
+            w.close()
+            w.deleteLater()
+
+
+class AtlasMatrixParentDlg(QtWidgets.QDialog):
+    """
+    Dialog controller for the Atlas Parent Matrix constraint tool.
+
+    This dialog hosts the generated `AtlasMatrixParentUi`, wires UX helpers
+    (axis groups, weight pairs, toggle guards), and triggers the construction
+    of a matrix-based parent constraint via `ParentCon`.
+    """
+
+    OBJECT_NAME = "AtlasMatrixParentDlg"
+
+    def __init__(self, parent=None):
+        """
+        Construct the dialog, build UI, and wire interactions.
+
+        Args:
+            parent (Optional[QWidget]): Optional Qt parent widget.
+        """
+        _delete_existing(self.OBJECT_NAME)
+        super().__init__(parent)
+        self.setObjectName(self.OBJECT_NAME)
+        self.setWindowTitle("Atlas – Parent Matrix")
+
+        # setup UI
+        self.ui = AtlasMatrixParentUi()
+        self.ui.setupUi(self)
+
+        # wire helpers
+        _wire_axis_group(self.ui.checkbox_parent_translate_all,
+                         self.ui.checkbox_parent_translate_x,
+                         self.ui.checkbox_parent_translate_y,
+                         self.ui.checkbox_parent_translate_z)
+        _wire_axis_group(self.ui.checkbox_parent_rotate_all,
+                         self.ui.checkbox_parent_rotate_x,
+                         self.ui.checkbox_parent_rotate_y,
+                         self.ui.checkbox_parent_rotate_z)
+        _wire_axis_group(self.ui.checkbox_parent_scale_all,
+                         self.ui.checkbox_parent_scale_x,
+                         self.ui.checkbox_parent_scale_y,
+                         self.ui.checkbox_parent_scale_z)
+        _wire_axis_group(self.ui.checkbox_parent_shear_all,
+                         self.ui.checkbox_parent_shear_x,
+                         self.ui.checkbox_parent_shear_y,
+                         self.ui.checkbox_parent_shear_z)
+
+        _wire_weight_pair(self.ui.horizontalslider_parent_translate_weight,
+                          self.ui.lineedit_parent_translate_weight)
+        _wire_weight_pair(self.ui.horizontalslider_parent_rotate_weight,
+                          self.ui.lineedit_parent_rotate_weight)
+        _wire_weight_pair(self.ui.horizontalslider_parent_scale_weight,
+                          self.ui.lineedit_parent_scale_weight)
+        _wire_weight_pair(self.ui.horizontalslider_parent_shear_weight,
+                          self.ui.lineedit_parent_scale_shear_weight)
+
+        # Keep hold only if offset
+        self.ui.checkbox_parent_offset.toggled.connect(self.ui.checkbox_parent_hold.setEnabled)
+        self.ui.checkbox_parent_hold.setEnabled(self.ui.checkbox_parent_offset.isChecked())
+
+
+        #self.ui.pushButton_apply.clicked.connect(self._on_build)
+
+    def _on_build(self):
+        """
+        Build the constraint using the current selection and UI options.
+
+        Expects the user to have selected:
+            - one or more driver nodes
+            - the driven node last (so it's the active item)
+
+        Gathers UI options via `_ui_to_parentcon_kwargs`, instantiates
+        `ParentCon`, and calls its build routine.
+
+        Raises:
+            RuntimeError: If selection is insufficient (handled as Maya warnings).
+        """
+        sel = cmds.ls(sl=True) or []
+        if len(sel) < 2:
+            cmds.warning("Select at least one driver and a driven (last selected).")
+            return
+        driven, drivers = sel[-1], sel[:-1]
+        kwargs = _ui_to_parentcon_kwargs(self.ui)
+
+        try:
+            con = ParentCon(driven=driven, drivers=drivers, **kwargs)
+            if hasattr(con, "build"):
+                con.build()
+            else:
+                con.mount_system()
+            cmds.inViewMessage(amg="<hl>ParentCon created</hl>", pos="midCenter", fade=True)
+        except Exception as e:
+            cmds.warning(f"ParentCon failed: {e}")
+
+
+def show():
+    """
+    Show the Atlas Matrix Parent dialog (single-instance helper).
+
+    Returns:
+        AtlasMatrixParentDlg: The created and shown dialog instance.
+    """
+    dlg = AtlasMatrixParentDlg()
+    dlg.show()
+    return dlg

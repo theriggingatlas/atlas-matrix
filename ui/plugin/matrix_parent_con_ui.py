@@ -20,7 +20,7 @@ from PySide6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QFrame,
     QSizePolicy, QSlider, QSpacerItem, QVBoxLayout,
     QWidget)
 
-class Ui_atlas_matrix_parent(object):
+class AtlasMatrixParentUi(object):
     def setupUi(self, atlas_matrix_parent):
         if not atlas_matrix_parent.objectName():
             atlas_matrix_parent.setObjectName(u"atlas_matrix_parent")

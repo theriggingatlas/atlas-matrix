@@ -15,8 +15,27 @@ Created: 2025
 
 
 from typing import Optional, List, Union, Tuple, Callable
+from dataclasses import dataclass
 
 from core.matrix import Matrix
+
+
+# ---------- DATA CLASS ----------
+
+
+@dataclass
+class AxisFilter:
+    x: bool = True
+    y: bool = True
+    z: bool = True
+
+
+@dataclass
+class AxisWeights:
+    translate: float = 1.0
+    rotate: float = 1.0
+    scale: float = 1.0
+    shear: float = 1.0
 
 
 # ---------- MAIN CLASS ----------
@@ -30,7 +49,20 @@ class ParentCon(Matrix):
     pickMatrix, holdMatrix, and blendMatrix nodes for precise control over
     transformations.
     """
-    def __init__(self, driven: Optional[str] = None, drivers: Optional[List[str]] = None):
+    def __init__(
+            self,
+            driven: Optional[str] = None,
+            drivers: Optional[List[str]] = None,
+            *,
+            offset: bool = False,
+            keep_hold: bool = False,
+            envelope: bool = False,
+            translate_filter: AxisFilter = AxisFilter(),
+            rotate_filter: AxisFilter = AxisFilter(),
+            scale_filter: AxisFilter = AxisFilter(),
+            shear_filter: AxisFilter = AxisFilter(),
+            weights: AxisWeights = AxisWeights()
+    ):
         """
         Initialize the ParentCon constraint setup.
 
@@ -40,25 +72,15 @@ class ParentCon(Matrix):
         """
         super().__init__(driven, drivers)
         self.constraint_type="parent"
-        self.offset = False
-        self.keep_hold = False
-        self.envelope = False
+        self.offset = offset
+        self.keep_hold = keep_hold
+        self.envelope = envelope
 
-        self.translate_x = ""
-        self.translate_y = ""
-        self.translate_z = ""
-
-        self.rotate_x = ""
-        self.rotate_y = ""
-        self.rotate_z = ""
-
-        self.scale_x = ""
-        self.scale_y = ""
-        self.scale_z = ""
-
-        self.shear_x = ""
-        self.shear_y = ""
-        self.shear_z = ""
+        self.translate_filter = translate_filter
+        self.rotate_filter = rotate_filter
+        self.scale_filter = scale_filter
+        self.shear_filter = shear_filter
+        self.weights = weights
 
 
     def _mount_offset(self, driver: str):
@@ -68,6 +90,7 @@ class ParentCon(Matrix):
         Args:
             driver (str): The name of the driver object
         """
+        # Create temporary mult to get the value of the offset
         mult_tmp_node, mult_tmp_in, mult_tmp_out = self.con_mult_matrix(f"tmp_{driver}")
 
         self.connect_attr(self.get_world_matrix(self.driven), mult_tmp_in(0))
@@ -103,7 +126,7 @@ class ParentCon(Matrix):
         pass
 
 
-    def _mount_system(self):
+    def mount_system(self):
         """
         Internal setup to create the constraint chain and connect it.
         """
@@ -112,19 +135,23 @@ class ParentCon(Matrix):
 
         mult_outs = []
 
+        # Setup of the mult system
         for index, driver in enumerate(self.drivers):
             mult_node, mult_in, mult_out = self.con_mult_matrix(driver)
             self.connect_attr(self.get_world_matrix(driver), mult_in(1))
             self.connect_attr(parent_inverse, mult_in(2))
 
+            # Generate offset
             self.create_offset(driver, mult_in)
 
             mult_outs.append(mult_out)
 
+        # Setup of the blend system
         if len(self.drivers) > 1 or self.envelope:
             blend_node, blend_input, blend_in, blend_out = self.con_blend_matrix()
             for index, mult_out in enumerate(mult_outs):
                 self.connect_attr(mult_outs[index], blend_in(index))
                 self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
+        # End connection if no blend created
         else:
             self.connect_attr(mult_outs[0], self.get_offset_parent_matrix(self.driven))
