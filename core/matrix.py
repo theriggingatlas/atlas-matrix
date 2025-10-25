@@ -80,7 +80,7 @@ class Matrix:
             raise ValueError(f"Invalid attributes detected: {invalid}")
 
 
-    def _attribute_have_same_datatype(self, attribute_a: str, attribute_b: str) -> str:
+    def _attribute_have_same_datatype(self, attribute_a: str, attribute_b: str) -> bool:
         """
         Compare whether two attributes share the same data type (shape + element type).
 
@@ -168,16 +168,13 @@ class Matrix:
         return self._create_matrix_node("holdMatrix", driver)
 
 
-    def blend_matrix(self, driver: str = "") -> str:
+    def blend_matrix(self) -> str:
         """Create a blendMatrix node for the given driver.
-
-        Args:
-            driver (str): The name of the driver node.
 
         Returns:
             str: The name of the created blendMatrix node.
         """
-        name = f"blendMatrix_{self.driven}_{self.constraining_name}"
+        name = f"blendMatrix_{self.driven}_space_shifter"
         return cmds.createNode("blendMatrix", name=name)
 
 
@@ -203,6 +200,17 @@ class Matrix:
             str: The name of the created composeMatrix node.
         """
         return self._create_matrix_node("composeMatrix", driver)
+
+
+    def identity_matrix(self) -> str:
+        """Create a identityMatrix node for the given driver.
+
+        Returns:
+            str: The name of the created identityMatrix node.
+        """
+        node_name = f"composematrix_{self.driven}_identity_parent"
+        node = cmds.createNode("composeMatrix", name=node_name)
+        return node
 
 
     @staticmethod
@@ -472,7 +480,7 @@ class Matrix:
         return node_decompose, in_decompose, out_translate, out_rotate, out_scale, out_shear
 
 
-    def get_set_attr(self, get_attribute: str, set_attribute: str) -> str:
+    def get_set_attr(self, get_attribute: str, set_attribute: str) -> None:
         """
         Get the value of a given attribute and set it to the given set_attribute
 
@@ -481,9 +489,19 @@ class Matrix:
             set_attribute(str): the attribute to set the value to
         """
         self._attribute_have_same_datatype(get_attribute,set_attribute)
+        value_type = cmds.getAttr(get_attribute, type=True)
 
-        cmds.getAttr(get_attribute)
-        cmds.setAttr(set_attribute, get_attribute)
+        if value_type == "matrix":
+            values = cmds.getAttr(get_attribute)[0]
+            cmds.setAttr(set_attribute, *values, type="matrix")
+        else:
+            value = cmds.getAttr(get_attribute)
+            if isinstance(value, list) and len(value) == 1:
+                value = value[0]
+            if isinstance(value, (tuple, list)):
+                cmds.setAttr(set_attribute, *value)
+            else:
+                cmds.setAttr(set_attribute, value)
 
 
     def get_parent_driven(self):

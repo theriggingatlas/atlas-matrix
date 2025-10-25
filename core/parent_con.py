@@ -42,7 +42,7 @@ class AxisWeights:
 
 
 class ParentCon(Matrix):
-    """"
+    """
     Class to create a matrix-based parent constraint in Maya.
 
     This constraint system uses multMatrix, decomposeMatrix, and optionally
@@ -76,11 +76,11 @@ class ParentCon(Matrix):
         self.keep_hold = keep_hold
         self.envelope = envelope
 
-        self.translate_filter = translate_filter
-        self.rotate_filter = rotate_filter
-        self.scale_filter = scale_filter
-        self.shear_filter = shear_filter
-        self.weights = weights
+        self.translate_filter = translate_filter or AxisFilter()
+        self.rotate_filter = rotate_filter or AxisFilter()
+        self.scale_filter = scale_filter or AxisFilter()
+        self.shear_filter = shear_filter or AxisFilter()
+        self.weights = weights or AxisWeights()
 
 
     def _all_translate(self):
@@ -138,7 +138,7 @@ class ParentCon(Matrix):
         if self.offset:
             mult_tmp_node, mult_tmp_in, mult_tmp_out = self._mount_offset(driver)
             if self.keep_hold:
-                hold_node, hold_in, hold_out = self.hold_matrix(driver)
+                hold_node, hold_in, hold_out = self.con_hold_matrix(driver)
                 self.get_set_attr(mult_tmp_out, hold_in)
                 self.connect_attr(hold_out, mult_in(0))
             else:
@@ -181,7 +181,12 @@ class ParentCon(Matrix):
         Internal setup to create the constraint chain and connect it.
         """
         parent_node = self.get_parent_driven()[0]
-        parent_inverse = self.get_inverse_world_matrix(parent_node)
+
+        if parent_node:
+            parent_inverse = self.get_inverse_world_matrix(parent_node)
+        else:
+            identity_node = self.identity_matrix()
+            parent_inverse = self.get_out_matrix(identity_node)
 
         all_translate = self._all_translate()
         all_rotate = self._all_rotate()
@@ -212,9 +217,11 @@ class ParentCon(Matrix):
         # Setup of the blend system
         if len(self.drivers) > 1 or self.envelope:
             blend_node, blend_input, blend_in, blend_out = self.con_blend_matrix()
+            if self.envelope:
+                self.get_set_attr(self.get_matrix(self.driven), blend_input)
             for index, mult_out in enumerate(mult_outs):
                 self.connect_attr(mult_outs[index], blend_in(index))
-                self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
+            self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
         # End connection if no blend created
         else:
             self.connect_attr(mult_outs[0], self.get_offset_parent_matrix(self.driven))
