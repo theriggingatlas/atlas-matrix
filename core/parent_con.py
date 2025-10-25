@@ -83,6 +83,34 @@ class ParentCon(Matrix):
         self.weights = weights
 
 
+    def _all_translate(self):
+        """
+        Indicate if all translate are checked or not
+        """
+        return self.translate_filter.x and self.translate_filter.y and self.translate_filter.z
+
+
+    def _all_rotate(self):
+        """
+        Indicate if all rotate are checked or not
+        """
+        return self.rotate_filter.x and self.rotate_filter.y and self.rotate_filter.z
+
+
+    def _all_scale(self):
+        """
+        Indicate if all scale are checked or not
+        """
+        return self.scale_filter.x and self.scale_filter.y and self.scale_filter.z
+
+
+    def _all_shear(self):
+        """
+        Indicate if all shear are checked or not
+        """
+        return self.shear_filter.x and self.shear_filter.y and self.shear_filter.z
+
+
     def _mount_offset(self, driver: str):
         """
         Mount the necessary setup for the offset system
@@ -122,6 +150,9 @@ class ParentCon(Matrix):
     def create_axis_filter(self, driver: str):
         """
         Create a composeMatrix if needed
+
+        Args:
+            driver (str): The name of the driver node.
         """
         decompose_node, decompose_in, decompose_out_translate, decompose_out_rotate, decompose_out_scale, decompose_out_shear = self.con_decompose_matrix(driver)
         compose_node, compose_in_translate, compose_in_rotate, compose_in_scale, compose_in_shear, compose_out = self.con_compose_matrix(driver)
@@ -142,6 +173,8 @@ class ParentCon(Matrix):
             if enabled:
                 self.connect_attr(decompose_out_shear(axis), compose_in_shear(axis))
 
+        return decompose_in, compose_out
+
 
     def mount_system(self):
         """
@@ -150,19 +183,29 @@ class ParentCon(Matrix):
         parent_node = self.get_parent_driven()[0]
         parent_inverse = self.get_inverse_world_matrix(parent_node)
 
+        all_translate = self._all_translate()
+        all_rotate = self._all_rotate()
+        all_scale = self._all_scale()
+        all_shear = self._all_shear()
+
         mult_outs = []
 
         # Setup of the mult system
         for index, driver in enumerate(self.drivers):
             mult_node, mult_in, mult_out = self.con_mult_matrix(driver)
-            self.connect_attr(self.get_world_matrix(driver), mult_in(1))
+
+            if all_translate and all_rotate and all_scale and all_shear:
+                self.connect_attr(self.get_world_matrix(driver), mult_in(1))
+            else:
+                # Generate axis filter
+                decompose_in, compose_out = self.create_axis_filter(driver)
+                self.connect_attr(self.get_world_matrix(driver), decompose_in)
+                self.connect_attr(compose_out, mult_in(1))
+
             self.connect_attr(parent_inverse, mult_in(2))
 
             # Generate offset
             self.create_offset(driver, mult_in)
-
-            # Generate axis filter
-            self.create_axis_filter(driver)
 
             mult_outs.append(mult_out)
 

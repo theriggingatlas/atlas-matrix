@@ -205,7 +205,8 @@ class Matrix:
         return self._create_matrix_node("composeMatrix", driver)
 
 
-    def get_out_matrix(self, matrix_node: str) -> str:
+    @staticmethod
+    def get_out_matrix(matrix_node: str) -> str:
         """Get the output matrix attribute name for a given matrix node.
 
         Args:
@@ -233,13 +234,13 @@ class Matrix:
             raise ValueError(f"Invalid matrix node : {matrix_node}")
 
 
-    def get_in_matrix(self, matrix_node: str, index: Optional[int] = None) -> str:
+    @staticmethod
+    def get_in_matrix(matrix_node: str) -> str:
         """
         Get the input matrix attribute name for a given matrix node.
 
         Args:
             matrix_node (str): The name of the matrix node.
-            index (int | None): The index for the input if applicable.
 
         Returns:
             str: The full input attribute path (e.g., "multMatrix.matrixIn[0]").
@@ -252,14 +253,6 @@ class Matrix:
 
             if verification.is_holdmatrix(matrix_node):
                 return f"{matrix_node}.inMatrix"
-
-            elif verification.is_multmatrix(matrix_node) or verification.is_addmatrix(matrix_node):
-                self._index_validation(matrix_node, index)
-                return f"{matrix_node}.matrixIn[{index}]"
-
-            elif verification.is_blendmatrix(matrix_node) or verification.is_parentmatrix(matrix_node):
-                self._index_validation(matrix_node, index)
-                return f"{matrix_node}.target[{index}].targetMatrix"
 
             else:
                 return f"{matrix_node}.inputMatrix"
@@ -383,6 +376,9 @@ class Matrix:
         """
         Create a hold matrix node to maintain offset between objects.
 
+        Args:
+            driver (str): The name of the driver node.
+
         Returns:
             str: Hold matrix name.
         """
@@ -397,6 +393,9 @@ class Matrix:
     def con_mult_matrix(self, driver: str) -> Tuple[str, Callable[[int], str], str]:
         """
         Create a mult matrix node to constrain object.
+
+        Args:
+            driver (str): The name of the driver node.
 
         Returns:
             Tuple[str, Callable[[int], str], str]: mult matrix name.
@@ -427,9 +426,12 @@ class Matrix:
         return node_blend, input_blend, in_blend, out_blend
 
 
-    def con_compose_matrix(self, driver: str):
+    def con_compose_matrix(self, driver: str) -> Tuple[str, Callable[[str], str], Callable[[str], str], Callable[[str], str], Callable[[str], str], str]:
         """
         Create a compose matrix node to compose constrained objects.
+
+        Args:
+            driver (str): The name of the driver node.
         """
         node_compose = self.compose_matrix(driver)
 
@@ -441,14 +443,18 @@ class Matrix:
             return f"{node_compose}.inputScale{axis.upper()}"
         def in_shear(axis: str) -> str:
             return f"{node_compose}.inputShear{axis.upper()}"
+
         out_compose = self.get_out_matrix(node_compose)
 
         return node_compose, in_translate, in_rotate, in_scale, in_shear, out_compose
 
 
-    def con_decompose_matrix(self, driver: str):
+    def con_decompose_matrix(self, driver: str) -> Tuple[str, str, Callable[[str], str], Callable[[str], str], Callable[[str], str], Callable[[str], str]]:
         """
         Create a decompose matrix node to decompose constrained objects.
+
+        Args:
+            driver (str): The name of the driver node.
         """
         node_decompose = self.decompose_matrix(driver)
 
