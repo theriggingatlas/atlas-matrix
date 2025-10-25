@@ -119,11 +119,28 @@ class ParentCon(Matrix):
             pass
 
 
-    def create_compose(self):
+    def create_axis_filter(self, driver: str):
         """
         Create a composeMatrix if needed
         """
-        pass
+        decompose_node, decompose_in, decompose_out_translate, decompose_out_rotate, decompose_out_scale, decompose_out_shear = self.con_decompose_matrix(driver)
+        compose_node, compose_in_translate, compose_in_rotate, compose_in_scale, compose_in_shear, compose_out = self.con_compose_matrix(driver)
+
+        for axis, enabled in zip("xyz", [self.translate_filter.x, self.translate_filter.y, self.translate_filter.z]):
+            if enabled:
+                self.connect_attr(decompose_out_translate(axis), compose_in_translate(axis))
+
+        for axis, enabled in zip("xyz", [self.rotate_filter.x, self.rotate_filter.y, self.rotate_filter.z]):
+            if enabled:
+                self.connect_attr(decompose_out_rotate(axis), compose_in_rotate(axis))
+
+        for axis, enabled in zip("xyz", [self.scale_filter.x, self.scale_filter.y, self.scale_filter.z]):
+            if enabled:
+                self.connect_attr(decompose_out_scale(axis), compose_in_scale(axis))
+
+        for axis, enabled in zip("xyz", [self.shear_filter.x, self.shear_filter.y, self.shear_filter.z]):
+            if enabled:
+                self.connect_attr(decompose_out_shear(axis), compose_in_shear(axis))
 
 
     def mount_system(self):
@@ -143,6 +160,9 @@ class ParentCon(Matrix):
 
             # Generate offset
             self.create_offset(driver, mult_in)
+
+            # Generate axis filter
+            self.create_axis_filter(driver)
 
             mult_outs.append(mult_out)
 

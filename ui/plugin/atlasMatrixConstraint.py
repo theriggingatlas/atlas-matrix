@@ -16,7 +16,7 @@ except Exception:
     from PySide2 import QtWidgets, QtCore   # Maya 2024 or earlier
     from shiboken2 import wrapInstance
 
-from matrix_parent_con_ui import Ui_atlas_matrix_parent
+from matrix_parent_con_ui import AtlasMatrixParentUi
 
 PLUGIN_NAME = "atlasMatrixConstraint"
 PLUGIN_VERSION = "1.4.0"
@@ -289,10 +289,10 @@ def _fnum(text, default=0.5):
         return default
 
 class ParentPanel(QtWidgets.QWidget):
-    """Wraps Ui_atlas_matrix_parent and provides collect/set_from_opts."""
+    """Wraps AtlasMatrixParentUi and provides collect/set_from_opts."""
     def __init__(self, parent=None, opts=None):
         super(ParentPanel, self).__init__(parent)
-        self.ui = Ui_atlas_matrix_parent()
+        self.ui = AtlasMatrixParentUi()
         self.ui.setupUi(self)
         self._wire_logic()
         if opts:

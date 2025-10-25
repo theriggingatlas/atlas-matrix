@@ -427,34 +427,43 @@ class Matrix:
         return node_blend, input_blend, in_blend, out_blend
 
 
-    def con_compose_matrix(self):
+    def con_compose_matrix(self, driver: str):
         """
         Create a compose matrix node to compose constrained objects.
-
-        Returns:
-            str: compose matrix name.
         """
-        node_compose = self.compose_matrix()
+        node_compose = self.compose_matrix(driver)
 
-        in_compose = self.get_in_matrix(node_compose)
+        def in_translate(axis: str) -> str:
+            return f"{node_compose}.inputTranslate{axis.upper()}"
+        def in_rotate(axis: str) -> str:
+            return f"{node_compose}.inputRotate{axis.upper()}"
+        def in_scale(axis: str) -> str:
+            return f"{node_compose}.inputScale{axis.upper()}"
+        def in_shear(axis: str) -> str:
+            return f"{node_compose}.inputShear{axis.upper()}"
         out_compose = self.get_out_matrix(node_compose)
 
-        return node_compose, in_compose, out_compose
+        return node_compose, in_translate, in_rotate, in_scale, in_shear, out_compose
 
 
-    def con_decompose_matrix(self):
+    def con_decompose_matrix(self, driver: str):
         """
         Create a decompose matrix node to decompose constrained objects.
-
-        Returns:
-            str: decompose matrix name.
         """
-        node_decompose = self.decompose_matrix()
+        node_decompose = self.decompose_matrix(driver)
 
         in_decompose = self.get_in_matrix(node_decompose)
-        out_decompose = self.get_out_matrix(node_decompose)
 
-        return node_decompose, in_decompose, out_decompose
+        def out_translate(axis: str) -> str:
+            return f"{node_decompose}.outputTranslate{axis.upper()}"
+        def out_rotate(axis: str) -> str:
+            return f"{node_decompose}.outputRotate{axis.upper()}"
+        def out_scale(axis: str) -> str:
+            return f"{node_decompose}.outputScale{axis.upper()}"
+        def out_shear(axis: str) -> str:
+            return f"{node_decompose}.outputShear{axis.upper()}"
+
+        return node_decompose, in_decompose, out_translate, out_rotate, out_scale, out_shear
 
 
     def get_set_attr(self, get_attribute: str, set_attribute: str) -> str:
