@@ -180,11 +180,14 @@ class ParentCon(Matrix):
         """
         Internal setup to create the constraint chain and connect it.
         """
-        parent_node = self.get_parent_driven()[0]
+        parent_result = self.get_parent_driven()
 
-        if parent_node:
+        # Handle case where object has no parent (is at world root)
+        if parent_result and len(parent_result) > 0:
+            parent_node = parent_result[0]
             parent_inverse = self.get_inverse_world_matrix(parent_node)
         else:
+            # No parent found, use identity matrix
             identity_node = self.identity_matrix()
             parent_inverse = self.get_out_matrix(identity_node)
 

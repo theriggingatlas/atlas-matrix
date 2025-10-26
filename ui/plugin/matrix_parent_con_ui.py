@@ -17,14 +17,14 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QFormLayout, QFrame,
     QGroupBox, QHBoxLayout, QLabel, QLineEdit,
-    QSizePolicy, QSlider, QSpacerItem, QVBoxLayout,
-    QWidget)
+    QPushButton, QSizePolicy, QSlider, QSpacerItem,
+    QVBoxLayout, QWidget)
 
 class AtlasMatrixParentUi(object):
     def setupUi(self, atlas_matrix_parent):
         if not atlas_matrix_parent.objectName():
             atlas_matrix_parent.setObjectName(u"atlas_matrix_parent")
-        atlas_matrix_parent.resize(650, 381)
+        atlas_matrix_parent.resize(650, 393)
         self.verticalLayout = QVBoxLayout(atlas_matrix_parent)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.horizontallayout_parent_stick_checkbox = QHBoxLayout()
@@ -82,10 +82,6 @@ class AtlasMatrixParentUi(object):
         self.checkbox_parent_enveloppe.setChecked(True)
 
         self.horizontallayout_parent_enveloppe.addWidget(self.checkbox_parent_enveloppe)
-
-        self.spacer_parent_enveloppe = QSpacerItem(10, 40, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-
-        self.horizontallayout_parent_enveloppe.addItem(self.spacer_parent_enveloppe)
 
 
         self.horizontallayout_parent_checkbox.addLayout(self.horizontallayout_parent_enveloppe)
@@ -382,6 +378,28 @@ class AtlasMatrixParentUi(object):
 
         self.verticalLayout.addWidget(self.group_parent_constraint_axis)
 
+        self.horizontalLayout_6 = QHBoxLayout()
+        self.horizontalLayout_6.setSpacing(6)
+        self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
+        self.horizontalLayout_6.setContentsMargins(-1, -1, -1, 0)
+        self.button_parent_add = QPushButton(atlas_matrix_parent)
+        self.button_parent_add.setObjectName(u"button_parent_add")
+
+        self.horizontalLayout_6.addWidget(self.button_parent_add)
+
+        self.button_parent_apply = QPushButton(atlas_matrix_parent)
+        self.button_parent_apply.setObjectName(u"button_parent_apply")
+
+        self.horizontalLayout_6.addWidget(self.button_parent_apply)
+
+        self.button_parent_close = QPushButton(atlas_matrix_parent)
+        self.button_parent_close.setObjectName(u"button_parent_close")
+
+        self.horizontalLayout_6.addWidget(self.button_parent_close)
+
+
+        self.verticalLayout.addLayout(self.horizontalLayout_6)
+
 
         self.retranslateUi(atlas_matrix_parent)
 
@@ -389,7 +407,7 @@ class AtlasMatrixParentUi(object):
     # setupUi
 
     def retranslateUi(self, atlas_matrix_parent):
-        atlas_matrix_parent.setWindowTitle(QCoreApplication.translate("atlas_matrix_parent", u"Form", None))
+        atlas_matrix_parent.setWindowTitle(QCoreApplication.translate("atlas_matrix_parent", u"Matrix Parent Constraint Options - Atlas Matrix 1.0.0", None))
         self.label_parent_offset.setText(QCoreApplication.translate("atlas_matrix_parent", u"Maintain offset:", None))
         self.checkbox_parent_offset.setText("")
         self.label_parent_hold.setText(QCoreApplication.translate("atlas_matrix_parent", u"Keep hold:", None))
@@ -425,4 +443,8 @@ class AtlasMatrixParentUi(object):
         self.checkbox_parent_shear_z.setText(QCoreApplication.translate("atlas_matrix_parent", u"Z", None))
         self.label_parent_shear_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"Weight:", None))
         self.lineedit_parent_scale_shear_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"0.500", None))
+        self.button_parent_add.setText(QCoreApplication.translate("atlas_matrix_parent", u"Add", None))
+        self.button_parent_apply.setText(QCoreApplication.translate("atlas_matrix_parent", u"Apply", None))
+        self.button_parent_close.setText(QCoreApplication.translate("atlas_matrix_parent", u"Close", None))
     # retranslateUi
+

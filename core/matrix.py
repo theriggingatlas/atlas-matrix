@@ -75,7 +75,7 @@ class Matrix:
         Raises:
             ValueError: If one or more attributes are invalid.
         """
-        invalid = [attr for attr in attribute_list if not verification.is_attribute_api(attr)]
+        invalid = [attr for attr in attribute_list if not verification.is_attribute(attr)]
         if invalid:
             raise ValueError(f"Invalid attributes detected: {invalid}")
 
@@ -221,43 +221,48 @@ class Matrix:
             matrix_node (str): The name of the matrix node.
 
         Returns:
-            str: The full output attribute path (e.g., "multMatrix.matrixSum").
+            str: The full output attribute path (e.g., "multMatrix1.matrixSum").
 
         Raises:
             ValueError: If the provided node is not a valid matrix node.
         """
-        if "matrix" in nodes.get_node_type(matrix_node.lower()):
+        # Get the node type (don't lowercase the node name!)
+        node_type = nodes.get_node_type(matrix_node)
+
+        # Check if it's a matrix-related node (lowercase the type for comparison)
+        if "matrix" in node_type.lower():
 
             if verification.is_inversematrix(matrix_node):
                 return f"{matrix_node}.outMatrix"
 
-            elif verification.is_multmatrix(matrix_node) or verification.is_addmatrix(matrix_node) or verification.is_wtaddmatrix(matrix_node):
+            elif verification.is_multmatrix(matrix_node) or verification.is_addmatrix(
+                    matrix_node) or verification.is_wtaddmatrix(matrix_node):
                 return f"{matrix_node}.matrixSum"
 
             else:
                 return f"{matrix_node}.outputMatrix"
 
         else:
-
-            raise ValueError(f"Invalid matrix node : {matrix_node}")
-
+            raise ValueError(f"Invalid matrix node: {matrix_node}")
 
     @staticmethod
     def get_in_matrix(matrix_node: str) -> str:
-        """
-        Get the input matrix attribute name for a given matrix node.
+        """Get the input matrix attribute name for a given matrix node.
 
         Args:
             matrix_node (str): The name of the matrix node.
 
         Returns:
-            str: The full input attribute path (e.g., "multMatrix.matrixIn[0]").
+            str: The full input attribute path (e.g., "decomposeMatrix1.inputMatrix").
 
         Raises:
-            ValueError: If the node is invalid or index is missing where required.
+            ValueError: If the node is invalid.
         """
+        # Get the node type (don't lowercase the node name!)
+        node_type = nodes.get_node_type(matrix_node)
 
-        if "matrix" in nodes.get_node_type(matrix_node.lower()):
+        # Check if it's a matrix-related node (lowercase the type for comparison)
+        if "matrix" in node_type.lower():
 
             if verification.is_holdmatrix(matrix_node):
                 return f"{matrix_node}.inMatrix"
@@ -266,8 +271,7 @@ class Matrix:
                 return f"{matrix_node}.inputMatrix"
 
         else:
-
-            raise ValueError(f"Invalid matrix node : {matrix_node}")
+            raise ValueError(f"Invalid matrix node: {matrix_node}")
 
 
     @staticmethod

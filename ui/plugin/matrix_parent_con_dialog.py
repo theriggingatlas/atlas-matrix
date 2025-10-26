@@ -228,48 +228,128 @@ class AtlasMatrixParentDlg(QtWidgets.QDialog):
         self.ui.checkbox_parent_offset.toggled.connect(self.ui.checkbox_parent_hold.setEnabled)
         self.ui.checkbox_parent_hold.setEnabled(self.ui.checkbox_parent_offset.isChecked())
 
-
-        #self.ui.pushButton_apply.clicked.connect(self._on_build)
+        self.ui.button_parent_apply.clicked.connect(self._on_build)
+        self.ui.button_parent_add.clicked.connect(self._on_build)
+        self.ui.button_parent_close.clicked.connect(self.close)
 
     def _on_build(self):
-        """
-        Build the constraint using the current selection and UI options.
-
-        Expects the user to have selected:
-            - one or more driver nodes
-            - the driven node last (so it's the active item)
-
-        Gathers UI options via `_ui_to_parentcon_kwargs`, instantiates
-        `ParentCon`, and calls its build routine.
-
-        Raises:
-            RuntimeError: If selection is insufficient (handled as Maya warnings).
-        """
+        """Build the constraint using the current selection and UI options."""
         sel = cmds.ls(sl=True) or []
         if len(sel) < 2:
             cmds.warning("Select at least one driver and a driven (last selected).")
             return
         driven, drivers = sel[-1], sel[:-1]
+
+        print("=" * 60)
+        print(f"Building constraint:")
+        print(f"  Driven: {driven}")
+        print(f"  Drivers: {drivers}")
+
+        # Check if objects actually exist
+        for obj in [driven] + drivers:
+            exists = cmds.objExists(obj)
+            print(f"  Object '{obj}' exists: {exists}")
+            if not exists:
+                cmds.warning(f"Object does not exist in scene: {obj}")
+                return
+
         kwargs = _ui_to_parentcon_kwargs(self.ui)
+        print(f"  Offset: {kwargs['offset']}")
+        print(f"  Keep Hold: {kwargs['keep_hold']}")
+        print("=" * 60)
 
         try:
+            print("Creating ParentCon object...")
             con = ParentCon(driven=driven, drivers=drivers, **kwargs)
-            if hasattr(con, "build"):
-                con.build()
-            else:
-                con.mount_system()
+            print("✓ ParentCon object created")
+
+            print("Calling mount_system()...")
+            con.mount_system()
+            print("✓ mount_system() completed")
+
             cmds.inViewMessage(amg="<hl>ParentCon created</hl>", pos="midCenter", fade=True)
         except Exception as e:
             cmds.warning(f"ParentCon failed: {e}")
+            import traceback
+            print("\n" + "=" * 60)
+            print("FULL ERROR TRACEBACK:")
+            print("=" * 60)
+            traceback.print_exc()
+            print("=" * 60)
+
+
+DIALOG_ATTR = "_atlasMatrixParentDlg"
+
+
+def _maya_main_window():
+    import maya.OpenMayaUI as omui
+    from shiboken6 import wrapInstance
+    ptr = omui.MQtUtil.mainWindow()
+    from PySide6.QtWidgets import QWidget
+    return wrapInstance(int(ptr), QWidget) if ptr else None
+
+
+def _install_dialog_ref(dlg):
+    """Store the dialog on Maya's main window; clean up when destroyed."""
+    main = _maya_main_window()
+    if not main:
+        return
+    # close an existing one if present
+    old = getattr(main, DIALOG_ATTR, None)
+    if old and old is not dlg:
+        try:
+            old.close()
+            old.deleteLater()
+        except RuntimeError:
+            pass
+    # store the new one
+    setattr(main, DIALOG_ATTR, dlg)
+
+    # when dlg is destroyed, clear the reference
+    from PySide6 import QtCore
+    dlg.destroyed.connect(lambda *_: setattr(main, DIALOG_ATTR, None))
+
+
+def _get_existing_dialog():
+    main = _maya_main_window()
+    return getattr(main, DIALOG_ATTR, None) if main else None
 
 
 def show():
-    """
-    Show the Atlas Matrix Parent dialog (single-instance helper).
+    """Show the Atlas Matrix Parent dialog with error handling."""
+    try:
+        print("Starting show() function...")
 
-    Returns:
-        AtlasMatrixParentDlg: The created and shown dialog instance.
-    """
-    dlg = AtlasMatrixParentDlg()
-    dlg.show()
-    return dlg
+        main = _maya_main_window()
+        print(f"Maya main window: {main}")
+
+        # Reuse if it exists
+        existing = _get_existing_dialog()
+        if existing:
+            print(f"Found existing dialog: {existing}")
+            existing.show()
+            existing.raise_()
+            existing.activateWindow()
+            return existing
+
+        # Otherwise create a new one
+        print("Creating new dialog...")
+        dlg = AtlasMatrixParentDlg(parent=main)
+        print(f"Dialog created: {dlg}")
+
+        _install_dialog_ref(dlg)
+        print("Dialog reference installed")
+
+        dlg.show()
+        dlg.raise_()
+        dlg.activateWindow()
+
+        print("Dialog should be visible now!")
+        return dlg
+
+    except Exception as e:
+        import traceback
+        print(f"Error in show(): {e}")
+        traceback.print_exc()
+        return None
+
