@@ -226,13 +226,13 @@ class Matrix:
         Raises:
             ValueError: If the provided node is not a valid matrix node.
         """
-        # Get the node type (don't lowercase the node name!)
+        # Get the node type
         node_type = nodes.get_node_type(matrix_node)
 
         # Check if it's a matrix-related node (lowercase the type for comparison)
         if "matrix" in node_type.lower():
 
-            if verification.is_inversematrix(matrix_node):
+            if verification.is_inversematrix(matrix_node) or verification.is_holdmatrix(matrix_node):
                 return f"{matrix_node}.outMatrix"
 
             elif verification.is_multmatrix(matrix_node) or verification.is_addmatrix(
@@ -492,11 +492,11 @@ class Matrix:
             get_attribute(str): the attribute to get the value from
             set_attribute(str): the attribute to set the value to
         """
-        self._attribute_have_same_datatype(get_attribute,set_attribute)
+        # self._attribute_have_same_datatype(get_attribute,set_attribute)
         value_type = cmds.getAttr(get_attribute, type=True)
 
         if value_type == "matrix":
-            values = cmds.getAttr(get_attribute)[0]
+            values = cmds.getAttr(get_attribute)
             cmds.setAttr(set_attribute, *values, type="matrix")
         else:
             value = cmds.getAttr(get_attribute)
@@ -527,6 +527,21 @@ class Matrix:
             target_attribute(str): the attribute with the target connection
 
         """
-        self._attribute_have_same_datatype(source_attribute, target_attribute)
+        #self._attribute_have_same_datatype(source_attribute, target_attribute)
 
-        cmds.connectAttr(source_attribute, target_attribute)
+        #cmds.connectAttr(source_attribute, target_attribute)
+
+        if not cmds.objExists(source_attribute):
+            raise ValueError(f"Source attribute does not exist: {source_attribute}")
+        if not cmds.objExists(target_attribute):
+            raise ValueError(f"Target attribute does not exist: {target_attribute}")
+
+        #if self._attribute_have_same_datatype(source_attribute, target_attribute):
+        #    cmds.connectAttr(source_attribute, target_attribute, force=True)
+        #else:
+        #    raise RuntimeError(f"Attributes {source_attribute} and {target_attribute} doesn't share the same datatype")
+
+        try:
+            cmds.connectAttr(source_attribute, target_attribute, force=True)
+        except Exception as e:
+            raise RuntimeError(f"Failed to connect {source_attribute} -> {target_attribute}: {e}")

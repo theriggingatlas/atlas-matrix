@@ -17,7 +17,10 @@ Created: 2025
 from typing import Optional, List, Union, Tuple, Callable
 from dataclasses import dataclass
 
+import maya.cmds as cmds
+
 from core.matrix import Matrix
+from core.utils import transform
 
 
 # ---------- DATA CLASS ----------
@@ -143,6 +146,7 @@ class ParentCon(Matrix):
                 self.connect_attr(hold_out, mult_in(0))
             else:
                 self.get_set_attr(mult_tmp_out, mult_in(0))
+            cmds.delete(mult_tmp_node)
         else:
             pass
 
@@ -228,3 +232,5 @@ class ParentCon(Matrix):
         # End connection if no blend created
         else:
             self.connect_attr(mult_outs[0], self.get_offset_parent_matrix(self.driven))
+
+        transform.idtransform(self.driven)
