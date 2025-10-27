@@ -422,7 +422,7 @@ class Matrix:
         return node_mult, in_mult, out_mult
 
 
-    def con_blend_matrix(self) -> Tuple[str, str, Callable[[int], str], str]:
+    def con_blend_matrix(self) -> Tuple[str, str, Callable[[int], str], str, Callable[[int], str]]:
         """
         Create a blend matrix node to blend constrained objects.
 
@@ -434,8 +434,10 @@ class Matrix:
         def in_blend(i: int) -> str:
             return f"{node_blend}.target[{i}].targetMatrix"
         out_blend = self.get_out_matrix(node_blend)
+        def in_weight(i: int) -> str:
+            return f"{node_blend}.target[{i}].weight"
 
-        return node_blend, input_blend, in_blend, out_blend
+        return node_blend, input_blend, in_blend, out_blend, in_weight
 
 
     def con_compose_matrix(self, driver: str) -> Tuple[str, Callable[[str], str], Callable[[str], str], Callable[[str], str], Callable[[str], str], str]:

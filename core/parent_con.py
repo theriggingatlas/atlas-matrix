@@ -135,7 +135,7 @@ class ParentCon(Matrix):
         Create the wanted offset type
 
         Args:
-            driver (str): The name of the driver object name
+            driver(str): The name of the driver object name
             mult_in(str): The in attribute of the multMatrix with great index.
         """
         if self.offset:
@@ -149,6 +149,28 @@ class ParentCon(Matrix):
             cmds.delete(mult_tmp_node)
         else:
             pass
+
+
+    def create_attr(self, index: int, blend_weight: Callable[[int], str]):
+        """
+        Create the attribute on self.driven
+
+        Args:
+            index (int) : The index value
+            blend_weight(str): The input of the blend
+        """
+        cmds.addAttr(
+            self.driven,
+            longName=f"W{index}",
+            shortName=f"W{index}",
+            attributeType="float",
+            multi=True,
+            minValue=0.0,
+            defaultValue=1.0,
+            keyable=True
+        )
+
+        self.connect_attr(f"{self.driven}.W{index}", blend_weight)
 
 
     def create_axis_filter(self, driver: str):
@@ -223,11 +245,12 @@ class ParentCon(Matrix):
 
         # Setup of the blend system
         if len(self.drivers) > 1 or self.envelope:
-            blend_node, blend_input, blend_in, blend_out = self.con_blend_matrix()
+            blend_node, blend_input, blend_in, blend_out, blend_in_weight = self.con_blend_matrix()
             if self.envelope:
                 self.get_set_attr(self.get_matrix(self.driven), blend_input)
             for index, mult_out in enumerate(mult_outs):
                 self.connect_attr(mult_outs[index], blend_in(index))
+                self.create_attr(index, blend_in_weight)
             self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
         # End connection if no blend created
         else:
