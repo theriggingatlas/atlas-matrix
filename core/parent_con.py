@@ -159,18 +159,23 @@ class ParentCon(Matrix):
             index (int) : The index value
             blend_weight(str): The input of the blend
         """
+        attr_name = f"W{index}"
+        created_attr = f"{self.driven}.{attr_name}"
         cmds.addAttr(
             self.driven,
-            longName=f"W{index}",
-            shortName=f"W{index}",
+            longName=attr_name,
+            shortName=attr_name,
             attributeType="float",
-            multi=True,
+            multi=False,
             minValue=0.0,
+            maxValue=1.0,
             defaultValue=1.0,
             keyable=True
         )
 
-        self.connect_attr(f"{self.driven}.W{index}", blend_weight)
+        self.connect_attr(created_attr, blend_weight(index))
+
+        return created_attr
 
 
     def create_axis_filter(self, driver: str):
@@ -206,54 +211,55 @@ class ParentCon(Matrix):
         """
         Internal setup to create the constraint chain and connect it.
         """
-        parent_result = self.get_parent_driven()
+        with self.undo_chunk(name="create"):
+            parent_result = self.get_parent_driven()
 
-        # Handle case where object has no parent (is at world root)
-        if parent_result and len(parent_result) > 0:
-            parent_node = parent_result[0]
-            parent_inverse = self.get_inverse_world_matrix(parent_node)
-        else:
-            # No parent found, use identity matrix
-            identity_node = self.identity_matrix()
-            parent_inverse = self.get_out_matrix(identity_node)
-
-        all_translate = self._all_translate()
-        all_rotate = self._all_rotate()
-        all_scale = self._all_scale()
-        all_shear = self._all_shear()
-
-        mult_outs = []
-
-        # Setup of the mult system
-        for index, driver in enumerate(self.drivers):
-            mult_node, mult_in, mult_out = self.con_mult_matrix(driver)
-
-            if all_translate and all_rotate and all_scale and all_shear:
-                self.connect_attr(self.get_world_matrix(driver), mult_in(1))
+            # Handle case where object has no parent (is at world root)
+            if parent_result and len(parent_result) > 0:
+                parent_node = parent_result[0]
+                parent_inverse = self.get_inverse_world_matrix(parent_node)
             else:
-                # Generate axis filter
-                decompose_in, compose_out = self.create_axis_filter(driver)
-                self.connect_attr(self.get_world_matrix(driver), decompose_in)
-                self.connect_attr(compose_out, mult_in(1))
+                # No parent found, use identity matrix
+                identity_node = self.identity_matrix()
+                parent_inverse = self.get_out_matrix(identity_node)
 
-            self.connect_attr(parent_inverse, mult_in(2))
+            all_translate = self._all_translate()
+            all_rotate = self._all_rotate()
+            all_scale = self._all_scale()
+            all_shear = self._all_shear()
 
-            # Generate offset
-            self.create_offset(driver, mult_in)
+            mult_outs = []
 
-            mult_outs.append(mult_out)
+            # Setup of the mult system
+            for index, driver in enumerate(self.drivers):
+                mult_node, mult_in, mult_out = self.con_mult_matrix(driver)
 
-        # Setup of the blend system
-        if len(self.drivers) > 1 or self.envelope:
-            blend_node, blend_input, blend_in, blend_out, blend_in_weight = self.con_blend_matrix()
-            if self.envelope:
-                self.get_set_attr(self.get_matrix(self.driven), blend_input)
-            for index, mult_out in enumerate(mult_outs):
-                self.connect_attr(mult_outs[index], blend_in(index))
-                self.create_attr(index, blend_in_weight)
-            self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
-        # End connection if no blend created
-        else:
-            self.connect_attr(mult_outs[0], self.get_offset_parent_matrix(self.driven))
+                if all_translate and all_rotate and all_scale and all_shear:
+                    self.connect_attr(self.get_world_matrix(driver), mult_in(1))
+                else:
+                    # Generate axis filter
+                    decompose_in, compose_out = self.create_axis_filter(driver)
+                    self.connect_attr(self.get_world_matrix(driver), decompose_in)
+                    self.connect_attr(compose_out, mult_in(1))
 
-        transform.idtransform(self.driven)
+                self.connect_attr(parent_inverse, mult_in(2))
+
+                # Generate offset
+                self.create_offset(driver, mult_in)
+
+                mult_outs.append(mult_out)
+
+            # Setup of the blend system
+            if len(self.drivers) > 1 or self.envelope:
+                blend_node, blend_input, blend_in, blend_out, blend_in_weight = self.con_blend_matrix()
+                if self.envelope:
+                    self.get_set_attr(self.get_matrix(self.driven), blend_input)
+                for index, mult_out in enumerate(mult_outs):
+                    self.connect_attr(mult_outs[index], blend_in(index))
+                    created_attr = self.create_attr(index, blend_in_weight)
+                self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
+            # End connection if no blend created
+            else:
+                self.connect_attr(mult_outs[0], self.get_offset_parent_matrix(self.driven))
+
+            transform.idtransform(self.driven)

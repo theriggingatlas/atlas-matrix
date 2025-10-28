@@ -16,6 +16,7 @@ Created: 2025
 # ---------- IMPORT ----------
 
 from typing import Optional, List, Union, Tuple, Callable
+from contextlib import contextmanager
 
 import maya.cmds as cmds
 from core.utils import nodes
@@ -50,6 +51,20 @@ class Matrix:
         self.constraint_type = ""
         if not self.driven or not self.drivers:
             raise ValueError("Provide driven and at least one driver.")
+
+
+    @contextmanager
+    def undo_chunk(self, name="Operation"):
+        """Context manager for wrapping operations in a single undo chunk"""
+        chunk_name = f"{self.constraint_type}_{name}_{self.driven}"
+        cmds.undoInfo(openChunk=True, chunkName=chunk_name)
+        try:
+            yield
+        except Exception as e:
+            cmds.undoInfo(cancelChunk=True)
+            raise e
+        finally:
+            cmds.undoInfo(closeChunk=True)
 
 
     @property
