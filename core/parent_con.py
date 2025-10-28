@@ -261,6 +261,8 @@ class ParentCon(Matrix):
                 for index, mult_out in enumerate(mult_outs):
                     self.connect_attr(mult_outs[index], blend_in(index))
                     created_attr = self.create_attr(index, blend_in_weight)
+                    if index > 0 :
+                        cmds.setAttr(created_attr, self.weights.all)
                 self.connect_attr(blend_out, self.get_offset_parent_matrix(self.driven))
             # End connection if no blend created
             else:
