@@ -39,6 +39,7 @@ class AxisWeights:
     rotate: float = 1.0
     scale: float = 1.0
     shear: float = 1.0
+    all: float = 1.0
 
 
 # ---------- MAIN CLASS ----------
@@ -151,13 +152,16 @@ class ParentCon(Matrix):
             pass
 
 
-    def create_attr(self, index: int, blend_weight: Callable[[int], str]):
+    def create_attr(self, index: int, blend_weight: Callable[[int], str]) -> str:
         """
         Create the attribute on self.driven
 
         Args:
             index (int) : The index value
             blend_weight(str): The input of the blend
+
+        Returns:
+            str : Created attribute
         """
         attr_name = f"W{index}"
         created_attr = f"{self.driven}.{attr_name}"

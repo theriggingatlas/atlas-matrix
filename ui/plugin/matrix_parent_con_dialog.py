@@ -138,6 +138,7 @@ def _ui_to_parentcon_kwargs(ui: AtlasMatrixParentUi):
         rotate=_float01(ui.lineedit_parent_rotate_weight.text() or "1"),
         scale=_float01(ui.lineedit_parent_scale_weight.text() or "1"),
         shear=_float01(ui.lineedit_parent_scale_shear_weight.text() or "1"),
+        all=_float01(ui.lineedit_parent_global_weight.text() or "1")
     )
 
     return dict(
@@ -223,6 +224,8 @@ class AtlasMatrixParentDlg(QtWidgets.QDialog):
                           self.ui.lineedit_parent_scale_weight)
         _wire_weight_pair(self.ui.horizontalslider_parent_shear_weight,
                           self.ui.lineedit_parent_scale_shear_weight)
+        _wire_weight_pair(self.ui.horizontalslider_parent_global_weight,
+                          self.ui.lineedit_parent_global_weight)
 
         # Keep hold only if offset
         self.ui.checkbox_parent_offset.toggled.connect(self.ui.checkbox_parent_hold.setEnabled)

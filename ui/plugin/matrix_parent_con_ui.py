@@ -24,7 +24,7 @@ class AtlasMatrixParentUi(object):
     def setupUi(self, atlas_matrix_parent):
         if not atlas_matrix_parent.objectName():
             atlas_matrix_parent.setObjectName(u"atlas_matrix_parent")
-        atlas_matrix_parent.resize(650, 393)
+        atlas_matrix_parent.resize(650, 472)
         self.verticalLayout = QVBoxLayout(atlas_matrix_parent)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.horizontallayout_parent_stick_checkbox = QHBoxLayout()
@@ -378,6 +378,32 @@ class AtlasMatrixParentUi(object):
 
         self.verticalLayout.addWidget(self.group_parent_constraint_axis)
 
+        self.group_parent_global_weight = QGroupBox(atlas_matrix_parent)
+        self.group_parent_global_weight.setObjectName(u"group_parent_global_weight")
+        self.verticalLayout_2 = QVBoxLayout(self.group_parent_global_weight)
+        self.verticalLayout_2.setObjectName(u"verticalLayout_2")
+        self.horizontallayout_parent_global_weight = QHBoxLayout()
+        self.horizontallayout_parent_global_weight.setObjectName(u"horizontallayout_parent_global_weight")
+        self.lineedit_parent_global_weight = QLineEdit(self.group_parent_global_weight)
+        self.lineedit_parent_global_weight.setObjectName(u"lineedit_parent_global_weight")
+        self.lineedit_parent_global_weight.setAlignment(Qt.AlignCenter)
+
+        self.horizontallayout_parent_global_weight.addWidget(self.lineedit_parent_global_weight)
+
+        self.horizontalslider_parent_global_weight = QSlider(self.group_parent_global_weight)
+        self.horizontalslider_parent_global_weight.setObjectName(u"horizontalslider_parent_global_weight")
+        self.horizontalslider_parent_global_weight.setOrientation(Qt.Horizontal)
+
+        self.horizontallayout_parent_global_weight.addWidget(self.horizontalslider_parent_global_weight)
+
+        self.horizontallayout_parent_global_weight.setStretch(0, 1)
+        self.horizontallayout_parent_global_weight.setStretch(1, 3)
+
+        self.verticalLayout_2.addLayout(self.horizontallayout_parent_global_weight)
+
+
+        self.verticalLayout.addWidget(self.group_parent_global_weight)
+
         self.horizontalLayout_6 = QHBoxLayout()
         self.horizontalLayout_6.setSpacing(6)
         self.horizontalLayout_6.setObjectName(u"horizontalLayout_6")
@@ -421,30 +447,31 @@ class AtlasMatrixParentUi(object):
         self.checkbox_parent_translate_y.setText(QCoreApplication.translate("atlas_matrix_parent", u"Y", None))
         self.checkbox_parent_translate_z.setText(QCoreApplication.translate("atlas_matrix_parent", u"Z", None))
         self.label_parent_translate_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"Weight:", None))
-        self.lineedit_parent_translate_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"0.500", None))
+        self.lineedit_parent_translate_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"1.000", None))
         self.label_parent_rotates_axis.setText(QCoreApplication.translate("atlas_matrix_parent", u"Rotate:", None))
         self.checkbox_parent_rotate_all.setText(QCoreApplication.translate("atlas_matrix_parent", u"All", None))
         self.checkbox_parent_rotate_x.setText(QCoreApplication.translate("atlas_matrix_parent", u"X", None))
         self.checkbox_parent_rotate_y.setText(QCoreApplication.translate("atlas_matrix_parent", u"Y", None))
         self.checkbox_parent_rotate_z.setText(QCoreApplication.translate("atlas_matrix_parent", u"Z", None))
         self.label_parent_rotate_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"Weight:", None))
-        self.lineedit_parent_rotate_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"0.500", None))
+        self.lineedit_parent_rotate_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"1.000", None))
         self.label_parent_scale_axis.setText(QCoreApplication.translate("atlas_matrix_parent", u"Scale:", None))
         self.checkbox_parent_scale_all.setText(QCoreApplication.translate("atlas_matrix_parent", u"All", None))
         self.checkbox_parent_scale_x.setText(QCoreApplication.translate("atlas_matrix_parent", u"X", None))
         self.checkbox_parent_scale_y.setText(QCoreApplication.translate("atlas_matrix_parent", u"Y", None))
         self.checkbox_parent_scale_z.setText(QCoreApplication.translate("atlas_matrix_parent", u"Z", None))
         self.label_parent_scale_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"Weight:", None))
-        self.lineedit_parent_scale_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"0.500", None))
+        self.lineedit_parent_scale_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"1.000", None))
         self.label_parent_shear_axis.setText(QCoreApplication.translate("atlas_matrix_parent", u"Shear:", None))
         self.checkbox_parent_shear_all.setText(QCoreApplication.translate("atlas_matrix_parent", u"All", None))
         self.checkbox_parent_shear_x.setText(QCoreApplication.translate("atlas_matrix_parent", u"X", None))
         self.checkbox_parent_shear_y.setText(QCoreApplication.translate("atlas_matrix_parent", u"Y", None))
         self.checkbox_parent_shear_z.setText(QCoreApplication.translate("atlas_matrix_parent", u"Z", None))
         self.label_parent_shear_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"Weight:", None))
-        self.lineedit_parent_scale_shear_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"0.500", None))
+        self.lineedit_parent_scale_shear_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"1.000", None))
+        self.group_parent_global_weight.setTitle(QCoreApplication.translate("atlas_matrix_parent", u"Global weight", None))
+        self.lineedit_parent_global_weight.setText(QCoreApplication.translate("atlas_matrix_parent", u"1.000", None))
         self.button_parent_add.setText(QCoreApplication.translate("atlas_matrix_parent", u"Add", None))
         self.button_parent_apply.setText(QCoreApplication.translate("atlas_matrix_parent", u"Apply", None))
         self.button_parent_close.setText(QCoreApplication.translate("atlas_matrix_parent", u"Close", None))
     # retranslateUi
-
