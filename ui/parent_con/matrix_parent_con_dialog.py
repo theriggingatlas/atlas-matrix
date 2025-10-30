@@ -1,10 +1,10 @@
-from PySide6 import QtWidgets, QtCore
+from PySide6 import QtWidgets
 from PySide6.QtGui import QDoubleValidator
 
 import maya.cmds as cmds
 
 from core.parent_con import ParentCon, AxisFilter, AxisWeights
-from ui.plugin.matrix_parent_con_ui import AtlasMatrixParentUi
+from ui.parent_con.matrix_parent_con_ui import AtlasMatrixParentUi
 
 
 def _float01(text: str, fallback: float = 1.0) -> float:
@@ -232,7 +232,7 @@ class AtlasMatrixParentDlg(QtWidgets.QDialog):
         self.ui.checkbox_parent_hold.setEnabled(self.ui.checkbox_parent_offset.isChecked())
 
         self.ui.button_parent_apply.clicked.connect(self._on_build)
-        self.ui.button_parent_add.clicked.connect(self._on_build)
+        self.ui.button_parent_add.clicked.connect(self._add_button)
         self.ui.button_parent_close.clicked.connect(self.close)
 
     def _on_build(self):
@@ -270,7 +270,7 @@ class AtlasMatrixParentDlg(QtWidgets.QDialog):
             con.mount_system()
             print("✓ mount_system() completed")
 
-            cmds.inViewMessage(amg="<hl>ParentCon created</hl>", pos="midCenter", fade=True)
+            cmds.inViewMessage(amg="<hl>Matrix Parent Constraint created</hl>", pos="midCenter", fade=True)
         except Exception as e:
             cmds.warning(f"ParentCon failed: {e}")
             import traceback
@@ -279,6 +279,11 @@ class AtlasMatrixParentDlg(QtWidgets.QDialog):
             print("=" * 60)
             traceback.print_exc()
             print("=" * 60)
+
+
+    def _add_button(self):
+        self._on_build()
+        self.close()
 
 
 DIALOG_ATTR = "_atlasMatrixParentDlg"
@@ -309,7 +314,6 @@ def _install_dialog_ref(dlg):
     setattr(main, DIALOG_ATTR, dlg)
 
     # when dlg is destroyed, clear the reference
-    from PySide6 import QtCore
     dlg.destroyed.connect(lambda *_: setattr(main, DIALOG_ATTR, None))
 
 

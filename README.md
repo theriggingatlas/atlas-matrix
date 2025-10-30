@@ -1,11 +1,15 @@
-# Atlas Matrix – Open Source Maya Constraint Tool
+# Atlas Matrix – Open Source Maya Matrix Constraint Tool
 
-**Author**: Clement Daures
-**Company**: The Rigging Atlas
-**Website**: theriggingatlas.com
-**Version**: 1.0.0  
-**Compatible with**: Autodesk Maya 2025+ (PySide6)
-**State**: Still in development
+- -*- coding: utf-8 -*-
+- **Author**: Clement Daures
+- **Company**: The Rigging Atlas
+- **Website**: theriggingatlas.com
+
+---
+
+- **Version**: 1.0.0  
+- **Compatible with**: Autodesk Maya 2025+ (PySide6)
+- **State**: Still in development
 
 ---
 
@@ -25,34 +29,45 @@ Atlas Matrix is fully built with **PySide6** and supports Maya 2025’s native Q
 ## 📁 File Structure
 
 ```
-atlas_matrix_tool/
-├── atlas_matrix_ui.py         # Auto-generated UI (compiled from .ui file via pyside6-uic)
-├── atlas_matrix_window.py     # Main QMainWindow logic & UI integration
-├── atlas_matrix_launcher.py   # Clean entry point for Maya integration
+atlas_matrix/
+├── core ├── matrix
+         ├── parent_con
+         ├── utils ├── attributes.py
+                   ├── nodes.py
+                   ├── transform.py
+                   ├── verification.py
+
+├── ui   ├── parent_con ├── main.py
+                        ├── dialog.py
+                        
+├── docs ├── 01_getting_started ├── quick_start.md
+         ├── 02_user_guide      ├── matrix_parent_constraint.md
+         ├── 03_developer_guide ├── coding_guidelines.md
+                                ├── naming_conventions.md
+         ├── 04_troubleshooting ├── common_issue.md
 ```
 
 ---
 
 ## 🚀 Installation
 
-1. Copy the `atlas-matrix/` folder to your Maya scripts directory (e.g. `~/Documents/maya/scripts/`).
-2. In Maya’s Script Editor, paste the following Python code:
+**01-AUTOMATIC**
+
+1. Drag and drop the ```install.py``` in `atlas_matrix/setup/` to your Maya viewport and restart maya
+2. You should see a shelf named `AtlasMatrix` in your maya shelves
+
+**02-MANUAL**
+
+1. Copy the `atlas_matrix/` folder to your Maya scripts directory (e.g. `~/Documents/maya/scripts/`).
+2. Copy the `atlas_matrix_parent.png` in `atlas_matrix/setup/` to your Maya icon directory (e.g `~/Documents/maya/prefs/icons/`)
+3. In Maya’s Script Editor, paste the following Python code for Parent Constraint:
 
 ```python
-import sys
-import os
-
-# Add the path to your tool (adjust if needed)
-tool_path = os.path.expanduser("~/Documents/maya/scripts/atlas-matrix")
-if tool_path not in sys.path:
-    sys.path.append(tool_path)
-
-# Reload and launch
-import launcher
 import importlib
-importlib.reload(launcher)
+from atlas_matrix.ui.parent_con import dialog
 
-launcher.launch()
+importlib.reload(dialog)
+dialog.show()
 ```
 
 💡 **Pro Tip**: Assign this code to a custom Maya shelf button for quick access!
@@ -65,7 +80,8 @@ launcher.launch()
 - Maintain offset
 - Hold state toggle
 - Axis control (Translate, Rotate, Scale)
-- Axis weight sliders (LineEdit + Slider linked)
+- Axis weight sliders 
+- Global weight slider 
 - Axis selection control (X, Y, Z)
 
 ### 🚧 Aim Constraint Tab
@@ -115,16 +131,3 @@ IG: [@theriggingatlas](https://instagram.com/theriggingatlas) or [@clementdaures
 
 This tool is distributed as-is for non-commercial use.  
 For commercial licensing or contributions, please contact the author directly.
-
---
-
-## TO DO
-
-debug all the functions
-compose matrix method
-decompose matrix method
-pick matrix method
-blend constraint method
-ui getter
-ui setter maya
-plugin installer
