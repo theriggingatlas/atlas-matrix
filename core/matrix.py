@@ -509,7 +509,6 @@ class Matrix:
             get_attribute(str): the attribute to get the value from
             set_attribute(str): the attribute to set the value to
         """
-        # self._attribute_have_same_datatype(get_attribute,set_attribute)
         value_type = cmds.getAttr(get_attribute, type=True)
 
         if value_type == "matrix":
@@ -544,21 +543,136 @@ class Matrix:
             target_attribute(str): the attribute with the target connection
 
         """
-        #self._attribute_have_same_datatype(source_attribute, target_attribute)
-
-        #cmds.connectAttr(source_attribute, target_attribute)
-
         if not cmds.objExists(source_attribute):
             raise ValueError(f"Source attribute does not exist: {source_attribute}")
         if not cmds.objExists(target_attribute):
             raise ValueError(f"Target attribute does not exist: {target_attribute}")
 
-        #if self._attribute_have_same_datatype(source_attribute, target_attribute):
-        #    cmds.connectAttr(source_attribute, target_attribute, force=True)
-        #else:
-        #    raise RuntimeError(f"Attributes {source_attribute} and {target_attribute} doesn't share the same datatype")
-
         try:
             cmds.connectAttr(source_attribute, target_attribute, force=True)
         except Exception as e:
             raise RuntimeError(f"Failed to connect {source_attribute} -> {target_attribute}: {e}")
+
+
+    def preserve_initial_connections(self):
+        """
+        Preserve initialal transform attribute values and reconnect existing inputs.
+
+        Creates a compound attribute 'initial' on the driven object with children for
+        translate, rotate, scale, and shear. Any existing incoming connections to
+        these attributes are automatically redirected to the new initial attributes.
+        """
+        # Create the 'initial' compound attribute
+        if not cmds.attributeQuery('initial', node=self.driven, exists=True):
+            cmds.addAttr(
+                self.driven,
+                longName='initial',
+                attributeType='compound',
+                numberOfChildren=12
+            )
+
+            for axis in ['X', 'Y', 'Z']:
+                cmds.addAttr(
+                    self.driven,
+                    longName=f'initialTranslate{axis}',
+                    attributeType='double',
+                    parent='initial',
+                    keyable=True
+                )
+
+            for axis in ['X', 'Y', 'Z']:
+                cmds.addAttr(
+                    self.driven,
+                    longName=f'initialRotate{axis}',
+                    attributeType='double',
+                    parent='initial',
+                    keyable=True
+                )
+
+            for axis in ['X', 'Y', 'Z']:
+                cmds.addAttr(
+                    self.driven,
+                    longName=f'initialScale{axis}',
+                    attributeType='double',
+                    defaultValue=1.0,
+                    parent='initial',
+                    keyable=True
+                )
+
+            for axis in ['X', 'Y', 'Z']:
+                cmds.addAttr(
+                    self.driven,
+                    longName=f'initialShear{axis}',
+                    attributeType='double',
+                    parent='initial',
+                    keyable=True
+                )
+
+        transform_types = [
+            ('translate', ['X', 'Y', 'Z']),
+            ('rotate', ['X', 'Y', 'Z']),
+            ('scale', ['X', 'Y', 'Z']),
+            ('shear', ['X', 'Y', 'Z'])
+        ]
+
+        for attr_type, axes in transform_types:
+            for axis in axes:
+                transform_attr = f"{self.driven}.{attr_type}{axis}"
+                initial_attr = f"{self.driven}.initial{attr_type.capitalize()}{axis}"
+
+                connections = cmds.listConnections(
+                    transform_attr,
+                    source=True,
+                    destination=False,
+                    plugs=True
+                )
+
+                if connections:
+                    source_attr = connections[0]
+                    try:
+                        cmds.disconnectAttr(source_attr, transform_attr)
+                        cmds.connectAttr(source_attr, initial_attr, force=True)
+                    except Exception as e:
+                        cmds.warning(f"Could not reconnect {source_attr} to {initial_attr}: {e}")
+                else:
+                    current_value = cmds.getAttr(transform_attr)
+                    cmds.setAttr(initial_attr, current_value)
+
+
+    def preserve_initial_matrix_connection(self):
+        """
+        Preserve original offsetParentMatrix value and reconnect existing input.
+
+        Creates a matrix attribute 'initial_matrix' on the driven object. Any existing
+        incoming connection to offsetParentMatrix is automatically redirected to
+        the new initial_matrix attribute.
+        """
+        if not cmds.attributeQuery('initialMatrix', node=self.driven, exists=True):
+            cmds.addAttr(
+                self.driven,
+                longName='initialMatrix',
+                attributeType='matrix',
+                keyable=False
+            )
+
+        opm_attr = f"{self.driven}.offsetParentMatrix"
+        initial_matrix_attr = f"{self.driven}.initialMatrix"
+
+        # Check for existing incoming connection
+        opm_connections = cmds.listConnections(
+            opm_attr,
+            source=True,
+            destination=False,
+            plugs=True
+        )
+
+        if opm_connections:
+            source_attr = opm_connections[0]
+            try:
+                cmds.disconnectAttr(source_attr, opm_attr)
+                cmds.connectAttr(source_attr, initial_matrix_attr, force=True)
+            except Exception as e:
+                cmds.warning(f"Could not reconnect {source_attr} to {initial_matrix_attr}: {e}")
+        else:
+            current_matrix = cmds.getAttr(opm_attr)
+            cmds.setAttr(initial_matrix_attr, current_matrix, type='matrix')
