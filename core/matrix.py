@@ -554,7 +554,7 @@ class Matrix:
             raise RuntimeError(f"Failed to connect {source_attribute} -> {target_attribute}: {e}")
 
 
-    def preserve_initial_connections(self):
+    def preserve_initial(self):
         """
         Preserve initialal transform attribute values and reconnect existing inputs.
 
@@ -639,7 +639,7 @@ class Matrix:
                     cmds.setAttr(initial_attr, current_value)
 
 
-    def preserve_initial_matrix_connection(self):
+    def preserve_initial_matrix(self):
         """
         Preserve original offsetParentMatrix value and reconnect existing input.
 
