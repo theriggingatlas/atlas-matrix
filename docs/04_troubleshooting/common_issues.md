@@ -9,13 +9,13 @@ This page lists common setup and runtime issues you might encounter while using 
 ### 🟥 Issue: *“Atlas Matrix doesn’t show up in Maya.”*
 
 **Possible causes:**
-- The `atlas_matrix` folder isn’t inside Maya’s `scripts` directory.
+- The `atlas_matrix` folder isn’t inside Maya’s `scripts` directory or your sys path inside userSetup.py isn't set correctly.
 - Maya wasn’t restarted after installation.
-- You’re running an older Maya version (requires Maya 2025+).
+- You’re running an older Maya version (requires Maya 2020+).
 
 **✅ Solution:**
 1. Confirm your folder path:
-Documents/maya/scripts/atlas_matrix/
+Documents/maya/<version>/scripts/atlas_matrix/
 2. Restart Maya.
 3. In Maya’s Python tab, try running:
 ```python
@@ -46,13 +46,11 @@ Confirm your scripts folder appears in that list.
 
 ### 🟥 Issue: “UI opens but appears blank or distorted.”
 
-**Cause:** Qt version mismatch — Atlas Matrix uses PySide6 / Qt6, supported only in Maya 2025+.
+**Cause:** Qt version mismatch — Atlas Matrix uses Pyside2 / Qt5 and PySide6 / Qt6, supported only in Maya 2017+.
 
 ** ✅ Solution: **
 
-Make sure you are running Maya 2025 or newer.
-
-Remove any old PySide2-based custom scripts that override Qt6 imports.
+Make sure you are running Maya 2020 or newer.
 
 If necessary, delete your Maya preferences: `Documents/maya/<version>/prefs/`
 

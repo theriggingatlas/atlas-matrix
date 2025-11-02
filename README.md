@@ -89,10 +89,10 @@ launcher.launch()
 
 ## 📌 Compatibility
 
-| Maya Version | Qt Version    | Compatible |
-|--------------|---------------|------------|
-| 2025+        | PySide6 / Qt6 | ✅ Yes      |
-| 2020 - 2024  | PySide2 / Qt5 | ❌ Coming   |
+| Maya Version | Qt Version    | Compatible  |
+|--------------|---------------|-------------|
+| 2025+        | PySide6 / Qt6 | ✅ Yes       |
+| 2020 - 2024  | PySide2 / Qt5 | ✅ Yes       |
 
 ---
 
@@ -120,11 +120,6 @@ For commercial licensing or contributions, please contact the author directly.
 
 ## TO DO
 
-debug all the functions
-compose matrix method
-decompose matrix method
-pick matrix method
-blend constraint method
-ui getter
-ui setter maya
-plugin installer
+add constraint remover
+add initialTransform attribute creation
+add initialMatrix attribute creation

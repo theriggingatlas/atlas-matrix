@@ -8,7 +8,7 @@ import re
 import os
 
 
-def convert_ui_file(input_file, output_file):
+def convert_ui_file(input_file: str, output_file: str):
     """
     Convert a PySide6 UI file to be compatible with both PySide2 and PySide6.
 
