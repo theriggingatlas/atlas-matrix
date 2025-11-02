@@ -35,47 +35,43 @@ atlas_matrix_tool/
 
 ## 🚀 Installation
 
-1. Copy the `atlas-matrix/` folder to your Maya scripts directory (e.g. `~/Documents/maya/scripts/`).
-2. In Maya’s Script Editor, paste the following Python code:
+1. Open Maya (2025+).
+2. Drag and drop the file `atlas_matrix/setup/install.py` directly into your Maya viewport.
+3. Restart Maya.
+4. You’ll now see a new shelf named **AtlasMatrix** in your Maya shelf bar.
 
-```python
-import sys
-import os
+✅ *That’s it! You’re ready to use Atlas Matrix.*
 
-# Add the path to your tool (adjust if needed)
-tool_path = os.path.expanduser("~/Documents/maya/scripts/atlas-matrix")
-if tool_path not in sys.path:
-    sys.path.append(tool_path)
-
-# Reload and launch
-import launcher
-import importlib
-importlib.reload(launcher)
-
-launcher.launch()
-```
-
-💡 **Pro Tip**: Assign this code to a custom Maya shelf button for quick access!
+FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/quick_start.md`
 
 ---
 
 ## 🖥️ Features
 
-### ✅ Parent Constraint Tab
+### ✅ Matrix Parent Constraint
 - Maintain offset
 - Hold state toggle
 - Axis control (Translate, Rotate, Scale)
 - Axis weight sliders (LineEdit + Slider linked)
 - Axis selection control (X, Y, Z)
 
-### 🚧 Aim Constraint Tab
+### 🚧 Matrix Aim Constraint
 - Aim & Up vector configuration
 - Target vectors with XYZ inputs
 - World up type selection
 - Hold and offset toggles
 
-### 🚧 Manager Tab
+### 🚧 Matrix Constraint Deleter
+- Delete constraint on selected object
+
+### 🚧 Matrix Constraint Manager
 - Placeholder for future constraint management tools
+
+---
+
+## 🛠️ How to use
+
+- Refer to `docs/02_user_guide/`
 
 ---
 
@@ -101,13 +97,6 @@ launcher.launch()
 **Author**: Clement Daures  
 Email: [clementdaures.contact@gmail.com](mailto:clementdaures.contact@gmail.com)  
 IG: [@theriggingatlas](https://instagram.com/theriggingatlas) or [@clementdaures](https://instagram.com/clementdaures)
-
----
-
-## 🛠️ Future Plans
-
-- Scene-wide constraint manager
-- Constraint replacer
 
 ---
 
