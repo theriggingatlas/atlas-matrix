@@ -1,10 +1,25 @@
-from PySide6 import QtWidgets
-from PySide6.QtGui import QDoubleValidator
+# -*- coding: utf-8 -*-
+"""
+Atlas Matrix Parent Constraint Dialog
+Compatible with Maya 2020+ (PySide2 and PySide6)
+
+Author: Clement Daures
+Company: The Rigging Atlas
+Website: theriggingatlas.com
+Created: 2025
+"""
+
+from ui.pyside_compat import (
+    QtWidgets, QtCore, QtGui,
+    QDoubleValidator,
+    get_maya_main_window,
+    PYSIDE_VERSION
+)
 
 import maya.cmds as cmds
 
 from core.parent_con import ParentCon, AxisFilter, AxisWeights
-from ui.parent_con.matrix_parent_con_ui import AtlasMatrixParentUi
+from ui.parent_con.matrix_parent_con_1ui import AtlasMatrixParentUi
 
 
 def _float01(text: str, fallback: float = 1.0) -> float:
@@ -289,17 +304,9 @@ class AtlasMatrixParentDlg(QtWidgets.QDialog):
 DIALOG_ATTR = "_atlasMatrixParentDlg"
 
 
-def _maya_main_window():
-    import maya.OpenMayaUI as omui
-    from shiboken6 import wrapInstance
-    ptr = omui.MQtUtil.mainWindow()
-    from PySide6.QtWidgets import QWidget
-    return wrapInstance(int(ptr), QWidget) if ptr else None
-
-
 def _install_dialog_ref(dlg):
     """Store the dialog on Maya's main window; clean up when destroyed."""
-    main = _maya_main_window()
+    main = get_maya_main_window()
     if not main:
         return
     # close an existing one if present
@@ -318,7 +325,7 @@ def _install_dialog_ref(dlg):
 
 
 def _get_existing_dialog():
-    main = _maya_main_window()
+    main = get_maya_main_window()
     return getattr(main, DIALOG_ATTR, None) if main else None
 
 
@@ -326,8 +333,9 @@ def show():
     """Show the Atlas Matrix Parent dialog with error handling."""
     try:
         print("Starting show() function...")
+        print(f"Pyside version: {PYSIDE_VERSION}")
 
-        main = _maya_main_window()
+        main = get_maya_main_window()
         print(f"Maya main window: {main}")
 
         # Reuse if it exists
@@ -359,4 +367,3 @@ def show():
         print(f"Error in show(): {e}")
         traceback.print_exc()
         return None
-

@@ -554,19 +554,18 @@ class Matrix:
             raise RuntimeError(f"Failed to connect {source_attribute} -> {target_attribute}: {e}")
 
 
-    def preserve_initial(self):
+    def preserve_initial_transform(self):
         """
         Preserve initialal transform attribute values and reconnect existing inputs.
 
-        Creates a compound attribute 'initial' on the driven object with children for
+        Creates a compound attribute 'initialTransform' on the driven object with children for
         translate, rotate, scale, and shear. Any existing incoming connections to
         these attributes are automatically redirected to the new initial attributes.
         """
-        # Create the 'initial' compound attribute
-        if not cmds.attributeQuery('initial', node=self.driven, exists=True):
+        if not cmds.attributeQuery('initialTransform', node=self.driven, exists=True):
             cmds.addAttr(
                 self.driven,
-                longName='initial',
+                longName='initialTransform',
                 attributeType='compound',
                 numberOfChildren=12
             )
@@ -658,7 +657,6 @@ class Matrix:
         opm_attr = f"{self.driven}.offsetParentMatrix"
         initial_matrix_attr = f"{self.driven}.initialMatrix"
 
-        # Check for existing incoming connection
         opm_connections = cmds.listConnections(
             opm_attr,
             source=True,
