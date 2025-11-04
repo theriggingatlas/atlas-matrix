@@ -1,15 +1,27 @@
 # -*- coding: utf-8 -*-
+"""
+Atlas Matrix Installer
+Compatible with Maya 2020+ (PySide2 and PySide6)
+
+Author: Clement Daures
+Company: The Rigging Atlas
+Website: theriggingatlas.com
+Created: 2025
+"""
+
+# ---------- IMPORT ----------
+
 import os
 import sys
 import shutil
 import platform
 import traceback
+
 import maya.cmds as cmds
 import maya.mel as mel
 
-# ----------------------------
-# Helpers
-# ----------------------------
+# ---------- FUNCTIONS ----------
+
 def _norm(p: str) -> str:
     return os.path.abspath(p).replace("\\", "/")
 
@@ -29,9 +41,7 @@ def get_maya_prefs_dir(maya_version: str, user_platform: str) -> str:
     else:  # Linux
         return os.path.expanduser(f"~/maya/{maya_version}")
 
-# ----------------------------
-# UserSetup writers (idempotent)
-# ----------------------------
+
 SCRIPT_MARKER = "# ATLAS_MATRIX_SCRIPT_PATH"
 ICON_MARKER   = "# ATLAS_MATRIX_ICON_PATH"
 
@@ -99,13 +109,11 @@ def write_usersetup_blocks(tools_dir: str, maya_scripts_dir: str) -> None:
     _append_once(user_py, SCRIPT_MARKER, py_block)
     _append_once(user_py, ICON_MARKER, icon_py_block)
 
-    # Write MEL userSetup (kept minimal)
+    # Write MEL userSetup
     _append_once(user_mel, SCRIPT_MARKER, mel_block)
     _append_once(user_mel, ICON_MARKER, icon_mel_block)
 
-# ----------------------------
-# Shelf install & live-load
-# ----------------------------
+
 def install_shelf(tools_dir: str, maya_prefs_dir: str) -> bool:
     """Copy shelf files from atlas_matrix/setup/shelves to Maya prefs and return True on success."""
     source_shelf_dir = os.path.join(tools_dir, "setup", "shelves")
@@ -137,18 +145,35 @@ def install_shelf(tools_dir: str, maya_prefs_dir: str) -> bool:
 
     return True
 
+
+def install_icons(atlas_dir: str, maya_prefs_dir: str) -> bool:
+    src = _norm(os.path.join(atlas_dir, "setup", "icons"))
+    dst = _norm(os.path.join(maya_prefs_dir, "prefs", "icons"))
+    if not os.path.isdir(src):
+        print(f"⚠ Icons source not found: {src}")
+        return False
+    os.makedirs(dst, exist_ok=True)
+    copied = 0
+    for name in os.listdir(src):
+        if name.lower().endswith((".png", ".xpm", ".bmp", ".svg")):
+            shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
+            copied += 1
+    print(f"✓ Copied {copied} icon(s) to {dst}")
+    return copied > 0
+
+
 def _inject_runtime_paths_now(tools_dir: str) -> None:
     """Make the current Maya session ready immediately (no restart)."""
     atlas_dir = _norm(tools_dir)
     parent_dir = _norm(os.path.dirname(atlas_dir))
     icon_dir = _norm(os.path.join(atlas_dir, "setup", "icons"))
 
-    # Python import path (parent of atlas_matrix)
+    # Python import path
     if parent_dir not in sys.path:
         sys.path.append(parent_dir)
         print(f"✓ Added to sys.path (runtime): {parent_dir}")
 
-    # MEL script path (optional, but nice)
+    # MEL script path
     sep = ";" if get_os() == "Windows" else ":"
     ms_path = os.environ.get("MAYA_SCRIPT_PATH", "")
     if parent_dir not in ms_path.split(sep):
@@ -180,14 +205,14 @@ def _load_shelf_now(shelf_name: str = "AtlasMatrix") -> None:
         print("Could not load shelf immediately (it will appear next launch).")
         traceback.print_exc()
 
-# ----------------------------
-# Main install
-# ----------------------------
+
+# ---------- INSTALLATION ----------
+
+
 def install():
-    # Location of this installer (inside the atlas_matrix package directory)
     this_file = _norm(__file__)
-    atlas_dir = _norm(os.path.dirname(this_file))          # .../atlas_matrix
-    parent_dir = _norm(os.path.dirname(atlas_dir))         # parent directory (must be on sys.path)
+    atlas_dir = _norm(os.path.dirname(this_file))
+    parent_dir = _norm(os.path.dirname(atlas_dir))
     user_platform = get_os()
     maya_version = get_maya_version()
 
@@ -196,20 +221,23 @@ def install():
 
     os.makedirs(maya_scripts_dir, exist_ok=True)
 
-    # 1) Write idempotent userSetup blocks
+    # Write idempotent userSetup blocks
     write_usersetup_blocks(atlas_dir, maya_scripts_dir)
 
-    # 2) Apply paths to the current session (no restart required)
+    # Apply paths to the current session (no restart required)
     _inject_runtime_paths_now(atlas_dir)
 
-    # 3) Install shelf files
+    # Install shelf files
     shelf_ok = install_shelf(atlas_dir, maya_prefs_dir)
 
-    # 4) Try to load the shelf right now
+    # Install icons
+    icons_ok = install_icons(atlas_dir, maya_prefs_dir)
+
+    # Try to load the shelf right now
     if shelf_ok:
         _load_shelf_now("AtlasMatrix")
 
-    # 5) Final dialog
+    # Final dialog
     parts = [
         "Atlas Matrix installed successfully!",
         f"\nMaya Version: {maya_version}",
@@ -225,10 +253,10 @@ def install():
 
     cmds.confirmDialog(title="Installation Complete", message="\n".join(parts), button=["OK"])
 
-# Drag-and-drop entry
+
 def onMayaDroppedPythonFile(*args, **kwargs):
     install()
 
-# Optional direct run
+
 if __name__ == "__main__":
     install()

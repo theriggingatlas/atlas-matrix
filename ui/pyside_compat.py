@@ -9,8 +9,15 @@ Website: theriggingatlas.com
 Created: 2025
 """
 
+# ---------- IMPORT ----------
+
+
 import sys
 import maya.cmds as cmds
+
+
+# ---------- SETUP ----------
+
 
 # Detect Maya version
 maya_version = int(cmds.about(version=True))

@@ -1,7 +1,23 @@
+# -*- coding: utf-8 -*-
+"""
+Atlas Matrix Installer
+Compatible with Maya 2020+ (PySide2 and PySide6)
+
+Author: Clement Daures
+Company: The Rigging Atlas
+Website: theriggingatlas.com
+Created: 2025
+"""
+
+# ---------- IMPORT ----------
+
 import os
 import sys
 import maya.cmds as cmds
 import platform
+
+
+# ---------- FUNCTIONS ----------
 
 
 def get_os() -> str:

@@ -2,11 +2,20 @@
 """
 Script to convert PySide6 UI files to work with both PySide2 and PySide6
 Run this to update your atlas_matrix_parent_ui.py file
+
+Author: Clement Daures
+Company: The Rigging Atlas
+Website: theriggingatlas.com
+Created: 2025
 """
+
+# ---------- IMPORT ----------
 
 import re
 import os
 
+
+# ---------- FUNCTIONS ----------
 
 def convert_ui_file(input_file: str, output_file: str):
     """
