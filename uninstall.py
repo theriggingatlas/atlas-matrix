@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Atlas Matrix Installer
+Atlas Matrix Uninstaller
 Compatible with Maya 2020+ (PySide2 and PySide6)
 
 Author: Clement Daures
@@ -12,25 +12,65 @@ Created: 2025
 # ---------- IMPORT ----------
 
 import os
-import sys
-import maya.cmds as cmds
 import platform
+from typing import List
+
+import maya.cmds as cmds
+
+# ---------- CONSTANTS ----------
+
+SCRIPT_MARKER = "# ATLAS_MATRIX_SCRIPT_PATH"
+ICON_MARKER = "# ATLAS_MATRIX_ICON_PATH"
+END_MARKER = "# END_ATLAS_MATRIX"
 
 
 # ---------- FUNCTIONS ----------
 
 
+def _norm(p: str) -> str:
+    """
+    Normalize a file path to use forward slashes and absolute form.
+
+    Args:
+        p (str): The path to normalize.
+
+    Returns:
+        str: Normalized absolute path with forward slashes.
+    """
+    return os.path.abspath(p).replace("\\", "/")
+
+
 def get_os() -> str:
+    """
+    Get the current operating system name.
+
+    Returns:
+        str: 'Windows', 'Darwin' (macOS), or 'Linux'.
+    """
     return platform.system()
 
 
 def get_maya_version() -> str:
-    """Get the current Maya version (e.g., '2024', '2025')"""
+    """
+    Get the current Maya version.
+
+    Returns:
+        str: Maya version string (e.g., '2024', '2025').
+    """
     return cmds.about(version=True)
 
 
 def get_maya_prefs_dir(maya_version: str, user_platform: str) -> str:
-    """Get Maya preferences directory based on platform and version"""
+    """
+    Get Maya preferences directory based on platform and version.
+
+    Args:
+        maya_version (str): Maya version string (e.g., '2024').
+        user_platform (str): Operating system name ('Windows', 'Darwin', 'Linux').
+
+    Returns:
+        str: Path to Maya preferences directory.
+    """
     if user_platform == "Windows":
         return os.path.join(
             os.environ["USERPROFILE"],
@@ -46,15 +86,75 @@ def get_maya_prefs_dir(maya_version: str, user_platform: str) -> str:
         return os.path.expanduser(f"~/maya/{maya_version}")
 
 
+def remove_marked_block(filepath: str, start_marker: str, end_marker: str) -> bool:
+    """
+    Remove marked block from a userSetup file.
+
+    Removes all lines between start_marker and end_marker (inclusive).
+
+    Args:
+        filepath (str): Path to the file to modify.
+        start_marker (str): Starting marker to identify block.
+        end_marker (str): Ending marker to identify block.
+
+    Returns:
+        bool: True if block was found and removed, False otherwise.
+    """
+    if not os.path.exists(filepath):
+        print(f"File not found: {filepath}")
+        return True  # Nothing to remove, consider it success
+
+    try:
+        with open(filepath, "r", encoding="utf-8") as f:
+            lines = f.readlines()
+
+        new_lines = []
+        skip_mode = False
+        found_marker = False
+
+        for line in lines:
+            if start_marker in line:
+                skip_mode = True
+                found_marker = True
+                continue
+            if skip_mode and end_marker in line:
+                skip_mode = False
+                continue
+            if not skip_mode:
+                new_lines.append(line)
+
+        if found_marker:
+            with open(filepath, "w", encoding="utf-8") as f:
+                f.writelines(new_lines)
+            print(f"Removed Atlas Matrix block from {os.path.basename(filepath)}")
+            return True
+        else:
+            print(f"No Atlas Matrix block found in {os.path.basename(filepath)}")
+            return True
+
+    except Exception as e:
+        print(f"Failed to process {filepath}: {e}")
+        return False
+
+
 def remove_shelf(maya_prefs_dir: str) -> bool:
     """
-    Remove the Atlas Matrix shelf from the UI and from disk.
+    Remove the Atlas Matrix shelf from UI and disk.
+
+    Deletes the shelf from the current Maya session and removes
+    shelf files from the prefs/shelves directory.
+
+    Args:
+        maya_prefs_dir (str): Path to Maya preferences directory.
+
+    Returns:
+        bool: True if removal succeeded or nothing to remove, False on error.
     """
     dest_shelf_dir = os.path.join(maya_prefs_dir, "prefs", "shelves")
-    shelves_prefs_file = os.path.join(maya_prefs_dir, "prefs", "shelvesPrefs.mel")
 
     print(f"Checking shelf directory: {dest_shelf_dir}")
 
+    # Remove from UI first
     shelf_ui_names = ["AtlasMatrix", "Atlas"]
     for shelf_ui in shelf_ui_names:
         if cmds.shelfLayout(shelf_ui, exists=True):
@@ -64,6 +164,7 @@ def remove_shelf(maya_prefs_dir: str) -> bool:
             except Exception as e:
                 print(f"Failed to delete shelf UI '{shelf_ui}': {e}")
 
+    # Remove files from disk
     if not os.path.exists(dest_shelf_dir):
         print(f"Shelf directory not found: {dest_shelf_dir}")
         return True
@@ -90,105 +191,115 @@ def remove_shelf(maya_prefs_dir: str) -> bool:
     return True
 
 
-def remove_from_usersetup(filepath: str, marker: str) -> bool:
-    """Remove marked sections from userSetup files"""
-    if not os.path.exists(filepath):
-        print(f"File not found: {filepath}")
-        return True  # Nothing to remove
+def remove_icons(maya_prefs_dir: str) -> bool:
+    """
+    Remove Atlas Matrix icon files from Maya prefs/icons directory.
+
+    Attempts to identify and remove icon files that were installed by
+    Atlas Matrix. Only removes files with Atlas-related prefixes.
+
+    Args:
+        maya_prefs_dir (str): Path to Maya preferences directory.
+
+    Returns:
+        bool: True if removal succeeded or nothing to remove, False on error.
+    """
+    icons_dir = os.path.join(maya_prefs_dir, "prefs", "icons")
+
+    if not os.path.exists(icons_dir):
+        print(f"Icons directory not found: {icons_dir}")
+        return True
+
+    # Icon prefixes to identify Atlas Matrix icons
+    atlas_icon_prefixes = ["atlas", "Atlas", "ATLAS"]
+    valid_extensions = [".png", ".xpm", ".bmp", ".svg"]
+    removed_count = 0
 
     try:
-        with open(filepath, "r") as f:
-            lines = f.readlines()
+        for filename in os.listdir(icons_dir):
+            if any(filename.startswith(prefix) for prefix in atlas_icon_prefixes):
+                if any(filename.lower().endswith(ext) for ext in valid_extensions):
+                    icon_path = os.path.join(icons_dir, filename)
+                    try:
+                        os.remove(icon_path)
+                        print(f"Removed icon: {filename}")
+                        removed_count += 1
+                    except Exception as e:
+                        print(f"Failed to remove icon {filename}: {e}")
 
-        # Find and remove lines between marker and next non-related line
-        new_lines = []
-        skip_mode = False
-        found_marker = False
-
-        for line in lines:
-            if marker in line:
-                skip_mode = True
-                found_marker = True
-                continue
-
-            if skip_mode:
-                # Skip lines that are part of the Atlas Matrix setup
-                if line.strip() == "" or line.strip().startswith("#"):
-                    continue
-                elif "ATLAS_MATRIX" in line or "atlas_matrix" in line.lower():
-                    continue
-                elif "putenv" in line or "sys.path.append" in line or "mel.eval" in line:
-                    # Skip the actual setup lines
-                    skip_mode = False
-                    continue
-                else:
-                    skip_mode = False
-
-            new_lines.append(line)
-
-        if found_marker:
-            # Write back the cleaned content
-            with open(filepath, "w") as f:
-                f.writelines(new_lines)
-            print(f"Removed Atlas Matrix entries from {os.path.basename(filepath)}")
+        if removed_count == 0:
+            print("No Atlas Matrix icons found to remove")
         else:
-            print(f"No Atlas Matrix entries found in {os.path.basename(filepath)}")
+            print(f"Removed {removed_count} icon file(s)")
 
         return True
 
     except Exception as e:
-        print(f"Failed to process {filepath}: {e}")
+        print(f"Error processing icons directory: {e}")
         return False
 
 
-def uninstall():
+def uninstall() -> None:
+    """
+    Main uninstallation function for Atlas Matrix.
+
+    Performs the following steps:
+    1. Removes script path blocks from userSetup files
+    2. Removes icon path blocks from userSetup files
+    3. Removes shelf files and UI elements
+    4. Removes icon files from Maya prefs
+    """
     user_platform = get_os()
     maya_version = get_maya_version()
 
-    # Get Maya preferences directory
-    maya_prefs_dir = get_maya_prefs_dir(maya_version, user_platform)
-    maya_scripts_dir = os.path.join(maya_prefs_dir, "scripts").replace("\\", "/")
+    maya_prefs_dir = _norm(get_maya_prefs_dir(maya_version, user_platform))
+    maya_scripts_dir = _norm(os.path.join(maya_prefs_dir, "scripts"))
 
-    success_count = 0
-    total_tasks = 4
+    print("=" * 60)
+    print("ATLAS MATRIX UNINSTALLATION")
+    print("=" * 60)
 
-    # Remove from userSetup.mel
+    success_list: List[bool] = []
+
+    # Remove script path blocks from userSetup files
     mel_file = os.path.join(maya_scripts_dir, "userSetup.mel")
-    if remove_from_usersetup(mel_file, "# ATLAS_MATRIX_SCRIPT_PATH"):
-        success_count += 1
-
-    # Remove from userSetup.py
     py_file = os.path.join(maya_scripts_dir, "userSetup.py")
-    if remove_from_usersetup(py_file, "# ATLAS_MATRIX_SCRIPT_PATH"):
-        success_count += 1
 
-    # Remove icon paths from userSetup files
-    if remove_from_usersetup(mel_file, "# ATLAS_MATRIX_ICON_PATH"):
-        success_count += 1
-    if remove_from_usersetup(py_file, "# ATLAS_MATRIX_ICON_PATH"):
-        # Don't increment here since we already counted py_file
-        pass
+    success_list.append(remove_marked_block(mel_file, SCRIPT_MARKER, END_MARKER))
+    success_list.append(remove_marked_block(py_file, SCRIPT_MARKER, END_MARKER))
+
+    # Remove icon path blocks from userSetup files
+    success_list.append(remove_marked_block(mel_file, ICON_MARKER, END_MARKER))
+    success_list.append(remove_marked_block(py_file, ICON_MARKER, END_MARKER))
 
     # Remove shelf
-    if remove_shelf(maya_prefs_dir):
-        success_count += 1
+    success_list.append(remove_shelf(maya_prefs_dir))
+
+    # Remove icons
+    success_list.append(remove_icons(maya_prefs_dir))
 
     # Build result message
+    all_success = all(success_list)
+
     message_parts = [
         f"Atlas Matrix Uninstallation Complete!",
         f"\nMaya Version: {maya_version}",
         f"Script directory: {maya_scripts_dir}",
     ]
 
-    if success_count >= total_tasks - 1:
+    if all_success:
         message_parts.append("\n✓ Script paths removed from userSetup files")
-        message_parts.append("✓ Icon paths removed")
+        message_parts.append("✓ Icon paths removed from userSetup files")
         message_parts.append("✓ Shelf files removed")
+        message_parts.append("✓ Icon files removed")
         message_parts.append("\n⚠ Please restart Maya to complete uninstallation.")
         message_parts.append("\nNote: The Atlas Matrix tool files themselves were not deleted.")
         message_parts.append("You can safely delete the atlas_matrix folder manually if desired.")
     else:
-        message_parts.append("\n⚠ Some steps encountered issues (check Script Editor)")
+        message_parts.append("\n⚠ Some steps encountered issues (check Script Editor for details)")
+
+    print("\n" + "\n".join(message_parts))
+    print("=" * 60)
 
     cmds.confirmDialog(
         title="Uninstallation Complete",
@@ -197,9 +308,17 @@ def uninstall():
     )
 
 
-# Required Maya drop function
-def onMayaDroppedPythonFile(*args, **kwargs):
-    """MANDATORY ENTRY POINT FOR MAYA DRAG-AND-DROP"""
+def onMayaDroppedPythonFile(*args, **kwargs) -> None:
+    """
+    Entry point for Maya drag-and-drop uninstallation.
+
+    This function is automatically called by Maya when the script is dropped
+    into the viewport.
+
+    Args:
+        *args: Variable positional arguments (unused).
+        **kwargs: Variable keyword arguments (unused).
+    """
     uninstall()
 
 

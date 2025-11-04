@@ -16,24 +16,65 @@ import sys
 import shutil
 import platform
 import traceback
+from typing import Optional
 
 import maya.cmds as cmds
 import maya.mel as mel
 
+# ---------- CONSTANTS ----------
+
+SCRIPT_MARKER = "# ATLAS_MATRIX_SCRIPT_PATH"
+ICON_MARKER = "# ATLAS_MATRIX_ICON_PATH"
+END_MARKER = "# END_ATLAS_MATRIX"
+
+
 # ---------- FUNCTIONS ----------
 
+
 def _norm(p: str) -> str:
+    """
+    Normalize a file path to use forward slashes and absolute form.
+
+    Args:
+        p (str): The path to normalize.
+
+    Returns:
+        str: Normalized absolute path with forward slashes.
+    """
     return os.path.abspath(p).replace("\\", "/")
 
+
 def get_os() -> str:
+    """
+    Get the current operating system name.
+
+    Returns:
+        str: 'Windows', 'Darwin' (macOS), or 'Linux'.
+    """
     return platform.system()
 
+
 def get_maya_version() -> str:
-    """Get the current Maya version (e.g., '2024', '2025')"""
+    """
+    Get the current Maya version.
+
+    Returns:
+        str: Maya version string (e.g., '2024', '2025').
+    """
     return cmds.about(version=True)
 
+
 def get_maya_prefs_dir(maya_version: str, user_platform: str) -> str:
-    """Get Maya preferences directory based on platform and version"""
+    """
+    Get Maya preferences directory based on platform and version.
+
+    Args:
+        maya_version (str): Maya version string (e.g., '2024').
+        user_platform (str): Operating system name ('Windows', 'Darwin', 'Linux').
+
+    Returns:
+        str: Path to Maya preferences directory.
+    """
     if user_platform == "Windows":
         return os.path.join(os.environ["USERPROFILE"], "Documents", "maya", maya_version)
     elif user_platform == "Darwin":  # Mac
@@ -42,45 +83,89 @@ def get_maya_prefs_dir(maya_version: str, user_platform: str) -> str:
         return os.path.expanduser(f"~/maya/{maya_version}")
 
 
-SCRIPT_MARKER = "# ATLAS_MATRIX_SCRIPT_PATH"
-ICON_MARKER   = "# ATLAS_MATRIX_ICON_PATH"
+def _remove_existing_block(filepath: str, start_marker: str, end_marker: str) -> str:
+    """
+    Remove existing marked block from a file and return cleaned content.
 
-def _append_once(filepath: str, marker: str, content: str) -> None:
-    existing = ""
-    if os.path.exists(filepath):
-        with open(filepath, "r", encoding="utf-8") as f:
-            existing = f.read()
+    Args:
+        filepath (str): Path to the file to clean.
+        start_marker (str): Starting marker line to identify block.
+        end_marker (str): Ending marker line to identify block.
 
-    if marker in existing:
-        print(f"{os.path.basename(filepath)} already contains marker {marker}, skipping")
-        return
+    Returns:
+        str: File content with marked block removed, or empty string if file doesn't exist.
+    """
+    if not os.path.exists(filepath):
+        return ""
 
-    # ensure file ends with a newline
-    with open(filepath, "a", encoding="utf-8") as f:
+    with open(filepath, "r", encoding="utf-8") as f:
+        lines = f.readlines()
+
+    new_lines = []
+    skip_mode = False
+
+    for line in lines:
+        if start_marker in line:
+            skip_mode = True
+            continue
+        if skip_mode and end_marker in line:
+            skip_mode = False
+            continue
+        if not skip_mode:
+            new_lines.append(line)
+
+    return "".join(new_lines)
+
+
+def _append_block(filepath: str, start_marker: str, end_marker: str, content: str) -> None:
+    """
+    Remove any existing marked block, then append new block to file.
+
+    Args:
+        filepath (str): Path to the file to modify.
+        start_marker (str): Starting marker for the block.
+        end_marker (str): Ending marker for the block.
+        content (str): Content to append (should include markers).
+    """
+    # Remove existing block first
+    existing = _remove_existing_block(filepath, start_marker, end_marker)
+
+    # Write cleaned content plus new block
+    with open(filepath, "w", encoding="utf-8") as f:
+        f.write(existing)
         if existing and not existing.endswith("\n"):
             f.write("\n")
         f.write("\n" + content)
-    print(f"Appended block to {os.path.basename(filepath)}")
+
+    print(f"Updated {os.path.basename(filepath)} with new block")
+
 
 def write_usersetup_blocks(tools_dir: str, maya_scripts_dir: str) -> None:
     """
-    Writes minimal, correct userSetup blocks:
-    - Adds the **parent** of atlas_matrix to sys.path so `import atlas_matrix` works
-    - Appends icon path to XBMLANGPATH (:/path)
+    Write userSetup blocks for script and icon paths.
+
+    Removes any existing Atlas Matrix blocks first to prevent duplicates,
+    then appends fresh configuration.
+
+    Args:
+        tools_dir (str): Path to the atlas_matrix directory.
+        maya_scripts_dir (str): Path to Maya's scripts directory.
     """
-    atlas_dir = _norm(tools_dir)                         # .../atlas_matrix
-    parent_dir = _norm(os.path.dirname(atlas_dir))       # parent of atlas_matrix (correct for imports)
+    atlas_dir = _norm(tools_dir)
+    parent_dir = _norm(os.path.dirname(atlas_dir))
     icon_dir = _norm(os.path.join(atlas_dir, "setup", "icons"))
 
     user_py = os.path.join(maya_scripts_dir, "userSetup.py")
     user_mel = os.path.join(maya_scripts_dir, "userSetup.mel")
 
+    # Python blocks
     py_block = (
         f"{SCRIPT_MARKER}\n"
         f"import sys\n"
         f"atlas_parent = r\"{parent_dir}\"\n"
         f"if atlas_parent not in sys.path:\n"
         f"    sys.path.append(atlas_parent)\n"
+        f"{END_MARKER}\n"
     )
 
     icon_py_block = (
@@ -90,32 +175,43 @@ def write_usersetup_blocks(tools_dir: str, maya_scripts_dir: str) -> None:
         f"current_xbm = mel.eval('getenv \"XBMLANGPATH\"')\n"
         f"if icon_path not in current_xbm:\n"
         f"    mel.eval(f'putenv \"XBMLANGPATH\" \"{{current_xbm}}:/{{icon_path}}\"')\n"
+        f"{END_MARKER}\n"
     )
 
+    # MEL blocks
     mel_separator = ";" if get_os() == "Windows" else ":"
     mel_block = (
         f"{SCRIPT_MARKER}\n"
         f"putenv(\"MAYA_SCRIPT_PATH\", `getenv \"MAYA_SCRIPT_PATH\"` + \"{mel_separator}{parent_dir}\");\n"
+        f"{END_MARKER}\n"
     )
 
     icon_mel_block = (
         f"{ICON_MARKER}\n"
         f"putenv(\"XBMLANGPATH\", `getenv \"XBMLANGPATH\"` + \":/{icon_dir}\");\n"
+        f"{END_MARKER}\n"
     )
 
     os.makedirs(maya_scripts_dir, exist_ok=True)
 
-    # Write Python userSetup
-    _append_once(user_py, SCRIPT_MARKER, py_block)
-    _append_once(user_py, ICON_MARKER, icon_py_block)
-
-    # Write MEL userSetup
-    _append_once(user_mel, SCRIPT_MARKER, mel_block)
-    _append_once(user_mel, ICON_MARKER, icon_mel_block)
+    # Write blocks (removes existing ones first)
+    _append_block(user_py, SCRIPT_MARKER, END_MARKER, py_block)
+    _append_block(user_py, ICON_MARKER, END_MARKER, icon_py_block)
+    _append_block(user_mel, SCRIPT_MARKER, END_MARKER, mel_block)
+    _append_block(user_mel, ICON_MARKER, END_MARKER, icon_mel_block)
 
 
 def install_shelf(tools_dir: str, maya_prefs_dir: str) -> bool:
-    """Copy shelf files from atlas_matrix/setup/shelves to Maya prefs and return True on success."""
+    """
+    Copy shelf files from atlas_matrix/setup/shelves to Maya prefs.
+
+    Args:
+        tools_dir (str): Path to the atlas_matrix directory.
+        maya_prefs_dir (str): Path to Maya preferences directory.
+
+    Returns:
+        bool: True if shelf installation succeeded, False otherwise.
+    """
     source_shelf_dir = os.path.join(tools_dir, "setup", "shelves")
     dest_shelf_dir = os.path.join(maya_prefs_dir, "prefs", "shelves")
 
@@ -147,23 +243,51 @@ def install_shelf(tools_dir: str, maya_prefs_dir: str) -> bool:
 
 
 def install_icons(atlas_dir: str, maya_prefs_dir: str) -> bool:
+    """
+    Copy icon files from atlas_matrix/setup/icons to Maya prefs/icons.
+
+    Args:
+        atlas_dir (str): Path to the atlas_matrix directory.
+        maya_prefs_dir (str): Path to Maya preferences directory.
+
+    Returns:
+        bool: True if at least one icon was copied, False otherwise.
+    """
     src = _norm(os.path.join(atlas_dir, "setup", "icons"))
     dst = _norm(os.path.join(maya_prefs_dir, "prefs", "icons"))
+
     if not os.path.isdir(src):
-        print(f"⚠ Icons source not found: {src}")
+        print(f"Icons source not found: {src}")
         return False
+
     os.makedirs(dst, exist_ok=True)
     copied = 0
+
     for name in os.listdir(src):
         if name.lower().endswith((".png", ".xpm", ".bmp", ".svg")):
-            shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
-            copied += 1
-    print(f"✓ Copied {copied} icon(s) to {dst}")
-    return copied > 0
+            try:
+                shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
+                copied += 1
+            except Exception as e:
+                print(f"Failed to copy icon {name}: {e}")
+
+    if copied > 0:
+        print(f"Copied {copied} icon(s) to {dst}")
+        return True
+    else:
+        print(f"No icons found to copy from {src}")
+        return False
 
 
 def _inject_runtime_paths_now(tools_dir: str) -> None:
-    """Make the current Maya session ready immediately (no restart)."""
+    """
+    Make the current Maya session ready immediately without restart.
+
+    Adds script and icon paths to the current session's environment.
+
+    Args:
+        tools_dir (str): Path to the atlas_matrix directory.
+    """
     atlas_dir = _norm(tools_dir)
     parent_dir = _norm(os.path.dirname(atlas_dir))
     icon_dir = _norm(os.path.join(atlas_dir, "setup", "icons"))
@@ -171,45 +295,59 @@ def _inject_runtime_paths_now(tools_dir: str) -> None:
     # Python import path
     if parent_dir not in sys.path:
         sys.path.append(parent_dir)
-        print(f"✓ Added to sys.path (runtime): {parent_dir}")
+        print(f"Added to sys.path (runtime): {parent_dir}")
 
     # MEL script path
     sep = ";" if get_os() == "Windows" else ":"
     ms_path = os.environ.get("MAYA_SCRIPT_PATH", "")
     if parent_dir not in ms_path.split(sep):
         os.environ["MAYA_SCRIPT_PATH"] = (ms_path + (sep if ms_path else "") + parent_dir)
+        print(f"Added to MAYA_SCRIPT_PATH (runtime)")
 
     # XBMLANGPATH (icons)
     try:
         current_xbm = mel.eval('getenv "XBMLANGPATH"')
         if icon_dir not in current_xbm:
             mel.eval(f'putenv "XBMLANGPATH" "{current_xbm}:/{icon_dir}"')
-            print("Icon path added to current session")
+            print(f"Added icon path to current session")
     except Exception:
         print("Could not update XBMLANGPATH in current session")
         traceback.print_exc()
 
+
 def _load_shelf_now(shelf_name: str = "AtlasMatrix") -> None:
     """
-    Load the shelf into the current session immediately (if possible).
+    Load the shelf into the current session immediately.
+
     Expects a file named shelf_<shelf_name>.mel in prefs/shelves.
+
+    Args:
+        shelf_name (str): Name of the shelf to load (default: 'AtlasMatrix').
     """
     try:
-        # loadNewShelf expects the base shelf filename without extension
         mel.eval(f'loadNewShelf "shelf_{shelf_name}"')
-        # Optional: select it
         mel.eval('global string $gShelfTopLevel;')
         mel.eval(f'shelfTabLayout -e -selectTab "{shelf_name}" $gShelfTopLevel;')
         print(f"Shelf '{shelf_name}' loaded in current session")
     except Exception:
-        print("Could not load shelf immediately (it will appear next launch).")
+        print("Could not load shelf immediately (it will appear on next launch)")
         traceback.print_exc()
 
 
 # ---------- INSTALLATION ----------
 
 
-def install():
+def install() -> None:
+    """
+    Main installation function for Atlas Matrix.
+
+    Performs the following steps:
+    1. Configures userSetup.py and userSetup.mel with script/icon paths
+    2. Injects paths into current Maya session
+    3. Copies shelf files to Maya prefs
+    4. Copies icon files to Maya prefs
+    5. Loads shelf in current session
+    """
     this_file = _norm(__file__)
     atlas_dir = _norm(os.path.dirname(this_file))
     parent_dir = _norm(os.path.dirname(atlas_dir))
@@ -220,6 +358,10 @@ def install():
     maya_scripts_dir = _norm(os.path.join(maya_prefs_dir, "scripts"))
 
     os.makedirs(maya_scripts_dir, exist_ok=True)
+
+    print("=" * 60)
+    print("ATLAS MATRIX INSTALLATION")
+    print("=" * 60)
 
     # Write idempotent userSetup blocks
     write_usersetup_blocks(atlas_dir, maya_scripts_dir)
@@ -246,15 +388,34 @@ def install():
         "\n✓ Script path configured",
         "✓ Icon path configured",
     ]
+
     if shelf_ok:
         parts.append("✓ Shelf files copied & loaded")
     else:
-        parts.append("⚠ Shelf installation had issues (check Script Editor).")
+        parts.append("⚠ Shelf installation had issues (check Script Editor)")
+
+    if icons_ok:
+        parts.append("✓ Icon files copied")
+    else:
+        parts.append("⚠ Icon installation had issues (check Script Editor)")
+
+    print("\n" + "\n".join(parts))
+    print("=" * 60)
 
     cmds.confirmDialog(title="Installation Complete", message="\n".join(parts), button=["OK"])
 
 
-def onMayaDroppedPythonFile(*args, **kwargs):
+def onMayaDroppedPythonFile(*args, **kwargs) -> None:
+    """
+    Entry point for Maya drag-and-drop installation.
+
+    This function is automatically called by Maya when the script is dropped
+    into the viewport.
+
+    Args:
+        *args: Variable positional arguments (unused).
+        **kwargs: Variable keyword arguments (unused).
+    """
     install()
 
 
