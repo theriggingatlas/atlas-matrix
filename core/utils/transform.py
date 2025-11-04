@@ -11,7 +11,7 @@ Created: 2025
 
 import maya.cmds as cmds
 
-from core.utils import verification
+from atlas_matrix.core.utils import verification
 
 
 # ---------- FUNCTIONS ----------

@@ -19,9 +19,9 @@ from typing import Optional, List, Union, Tuple, Callable
 from contextlib import contextmanager
 
 import maya.cmds as cmds
-from core.utils import nodes
-from core.utils import attributes
-from core.utils import verification
+from atlas_matrix.core.utils import nodes
+from atlas_matrix.core.utils import attributes
+from atlas_matrix.core.utils import verification
 
 
 # ---------- MAIN CLASS ----------

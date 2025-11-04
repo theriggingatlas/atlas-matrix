@@ -3,7 +3,7 @@
 Auto-generated UI file - Compatible with PySide2 and PySide6
 """
 
-from ui.pyside_compat import QtCore, QtGui, QtWidgets
+from atlas_matrix.ui.pyside_compat import QtCore, QtGui, QtWidgets
 
 # For backwards compatibility
 QCoreApplication = QtCore.QCoreApplication

@@ -9,7 +9,7 @@ Website: theriggingatlas.com
 Created: 2025
 """
 
-from ui.pyside_compat import (
+from atlas_matrix.ui.pyside_compat import (
     QtWidgets, QtCore, QtGui,
     QDoubleValidator,
     get_maya_main_window,
@@ -18,8 +18,8 @@ from ui.pyside_compat import (
 
 import maya.cmds as cmds
 
-from core.parent_con import ParentCon, AxisFilter, AxisWeights
-from ui.parent_con.matrix_parent_con_1ui import AtlasMatrixParentUi
+from atlas_matrix.core.parent_con import ParentCon, AxisFilter, AxisWeights
+from atlas_matrix.ui.parent_con.matrix_parent_con_ui import AtlasMatrixParentUi
 
 
 def _float01(text: str, fallback: float = 1.0) -> float:

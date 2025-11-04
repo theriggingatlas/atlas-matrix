@@ -19,8 +19,8 @@ from dataclasses import dataclass
 
 import maya.cmds as cmds
 
-from core.matrix import Matrix
-from core.utils import transform
+from atlas_matrix.core.matrix import Matrix
+from atlas_matrix.core.utils import transform
 
 
 # ---------- DATA CLASS ----------

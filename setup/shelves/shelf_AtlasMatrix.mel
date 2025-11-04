@@ -1,4 +1,4 @@
-global proc shelf_AtlasManager () {
+global proc shelf_AtlasMatrix () {
     global string $gBuffStr;
     global string $gBuffStr0;
     global string $gBuffStr1;
@@ -33,7 +33,7 @@ global proc shelf_AtlasManager () {
         -style "iconOnly" 
         -marginWidth 0
         -marginHeight 1
-        -command "from atlas_manager.ui import main as atlas_main\natlas_main.launch(dcc=\"Maya\")\n"
+        -command "from atlas_matrix.ui.parent_con import matrix_parent_con_dialog as dialog\ndialog.show()"
         -sourceType "python" 
         -commandRepeatable 1
         -flat 1

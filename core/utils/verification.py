@@ -12,7 +12,7 @@ Created: 2025
 import maya.api.OpenMaya as om
 import maya.cmds as cmds
 
-from core.utils import nodes
+from atlas_matrix.core.utils import nodes
 
 
 # ---------- FUNCTIONS ----------

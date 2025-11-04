@@ -8,7 +8,7 @@ Created: 2025
 
 # ---------- IMPORT ----------
 
-from core.utils import verification
+from atlas_matrix.core.utils import verification
 
 
 # ---------- FUNCTIONS ----------
