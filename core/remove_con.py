@@ -350,12 +350,12 @@ class RemoveCon(Matrix):
                 )
                 return
 
+            # Disconnect offsetParentMatrix
+            self._disconnect_offset_parent_matrix()
+
             # Restore original values
             self._restore_transform_values()
             self._restore_matrix_value()
-
-            # Disconnect offsetParentMatrix
-            self._disconnect_offset_parent_matrix()
 
             # Delete constraint nodes
             for node in constraint_nodes:
@@ -384,8 +384,8 @@ def remove_constraint(driven: Optional[str] = None, constraint_type: Optional[st
             If None, will attempt to detect automatically.
 
     Example:
-        >>> remove_constraint("pCube1", "parent")
-        >>> remove_constraint()  # Uses selected object
+        remove_constraint("pCube1", "parent")
+        remove_constraint()  # Uses selected object
     """
     remover = RemoveCon(driven=driven, constraint_type=constraint_type)
     remover.remove()

@@ -232,6 +232,9 @@ class ParentCon(Matrix):
             all_scale = self._all_scale()
             all_shear = self._all_shear()
 
+            self.preserve_initial_transform()
+            self.preserve_initial_matrix()
+
             mult_outs = []
 
             # Setup of the mult system
