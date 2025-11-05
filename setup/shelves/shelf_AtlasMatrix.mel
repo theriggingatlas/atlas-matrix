@@ -51,4 +51,38 @@ global proc shelf_AtlasMatrix () {
         -style "shelf"
         -horizontal 0
     ;
+    shelfButton
+        -enableCommandRepeat 1
+        -flexibleWidthType 3
+        -flexibleWidthValue 32
+        -enable 1
+        -width 35
+        -height 34
+        -manage 1
+        -visible 1
+        -preventOverride 0
+        -annotation "Atlas Matrix Parent Constraint UI"
+        -enableBackground 0
+        -backgroundColor 0 0 0
+        -highlightColor 0.321569 0.521569 0.65098
+        -align "center"
+        -label "main_UI"
+        -labelOffset 0
+        -rotation 0
+        -flipX 0
+        -flipY 0
+        -useAlpha 1
+        -font "plainLabelFont"
+        -overlayLabelColor 0.8 0.8 0.8
+        -overlayLabelBackColor 0 0 0 0.5
+        -image "atlas_matrix_remove_con.png"
+        -image1 "atlas_matrix_remove_con.png"
+        -style "iconOnly"
+        -marginWidth 0
+        -marginHeight 1
+        -command "from atlas_matrix.core.remove_con import remove_constraint\nremove_constraint()"
+        -sourceType "python"
+        -commandRepeatable 1
+        -flat 1
+    ;
 }
