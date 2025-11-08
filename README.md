@@ -61,7 +61,7 @@ FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/quick_start.md
 - World up type selection
 - Hold and offset toggles
 
-### 🚧 Matrix Constraint Deleter
+### ✅ Matrix Constraint Remover
 - Delete constraint on selected object
 
 ### 🚧 Matrix Constraint Manager
@@ -104,11 +104,3 @@ IG: [@theriggingatlas](https://instagram.com/theriggingatlas) or [@clementdaures
 
 This tool is distributed as-is for non-commercial use.  
 For commercial licensing or contributions, please contact the author directly.
-
---
-
-## TO DO
-
-add constraint remover
-add initialTransform attribute creation
-add initialMatrix attribute creation
