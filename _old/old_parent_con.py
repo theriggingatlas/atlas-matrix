@@ -10,9 +10,7 @@ Created: 2025
 
 import maya.cmds as cmds
 
-from core.utils import nodes
-from core.utils import attributes
-from core.utils import transform
+from atlas_matrix.core.utils import transform, nodes, attributes
 
 
 # ---------- MAIN CLASS ----------

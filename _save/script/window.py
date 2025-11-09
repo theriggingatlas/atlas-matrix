@@ -11,7 +11,7 @@ from PySide6.QtCore import Qt
 from shiboken6 import wrapInstance
 import maya.OpenMayaUI as omui
 
-from ui.script.main_ui import ui_window_main
+from atlas_matrix.ui import ui_window_main
 
 def get_maya_main_window():
     """

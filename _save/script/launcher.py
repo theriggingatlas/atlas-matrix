@@ -6,7 +6,7 @@ Created: 2025
 About: Launch UI for the Atlas Matrix Tool
 """
 
-from ui.script.window import AtlasMatrixWindow
+from atlas_matrix.ui import AtlasMatrixWindow
 
 def launch():
     """

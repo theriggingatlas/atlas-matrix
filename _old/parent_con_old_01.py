@@ -8,9 +8,8 @@ About: DEP function to use parent constraint matrix inside Maya
 
 """
 import maya.cmds as cmds
-from core.utils import nodes
-from core.utils import attributes
-from core.utils import transform
+from atlas_matrix.core.utils import transform, nodes, attributes
+
 
 class ParentCon:
     def __init__(self, object_list=None, translate_bm=1, rotate_bm=1, scale_bm=1, offset=False, hold=False, pick_mat=False, translate_pm=False, rotate_pm=False, scale_pm=False):
