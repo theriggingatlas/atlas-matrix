@@ -81,4 +81,20 @@ Each transform type (Translate, Rotate, Scale, Shear) includes:
 - **Hold:** (Disabled in v1.0.0, reserved for future release.)  
 - **Global Weight:** Multiplies all axis weights for unified constraint blending.
 
+---
 
+## 💡 Pro tips
+
+Launch Atlas Matrix Parent Constraint from Maya's Script Editor:
+```python
+from atlas_matrix.ui.parent_con import dialog
+dialog.show()
+```
+
+ For development (with auto-reload):
+```python
+import importlib
+from atlas_matrix.ui.parent_con import dialog
+importlib.reload(dialog)
+dialog.show()
+```
