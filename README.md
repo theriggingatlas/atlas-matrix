@@ -4,8 +4,9 @@
 **Company**: The Rigging Atlas
 **Website**: theriggingatlas.com
 **Version**: 1.0.0  
-**Compatible with**: Autodesk Maya 2025+ (PySide6)
+**Compatible with**: Autodesk Maya 2020+ (PySide6)
 **State**: Still in development
+**License**: Apache 2.0
 
 ---
 
@@ -15,11 +16,12 @@
 
 It features a clean, tabbed interface that supports:
 - Parent constraints with fine control over axes and weights
-- Aim constraints with full vector and up-vector configuration
+- Aim constraints with full vector and up-vector configuration (placeholder for future development)
+- Remove constraints
 - Manager panel (placeholder for future development)
 
 Atlas Matrix is fully built with **PySide6** and supports Maya 2025’s native Qt6 backend. 
-
+Code is adapted to run on **PySide2**
 ---
 
 ## 📁 File Structure
@@ -33,7 +35,7 @@ atlas_matrix_tool/
 
 ---
 
-## 🚀 Installation
+## ⚙️ Installation
 
 1. Open Maya (2025+).
 2. Drag and drop the file `atlas_matrix/setup/install.py` directly into your Maya viewport.
@@ -42,7 +44,7 @@ atlas_matrix_tool/
 
 ✅ *That’s it! You’re ready to use Atlas Matrix.*
 
-FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/quick_start.md`
+FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/a_installation.md`
 
 ---
 
@@ -102,5 +104,16 @@ IG: [@theriggingatlas](https://instagram.com/theriggingatlas) or [@clementdaures
 
 ## 📃 License
 
-This tool is distributed as-is for non-commercial use.  
-For commercial licensing or contributions, please contact the author directly.
+Copyright 2025 Clement Daures - The Rigging Atlas
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
