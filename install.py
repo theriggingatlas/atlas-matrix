@@ -255,6 +255,7 @@ def install_icons(atlas_dir: str, maya_prefs_dir: str) -> bool:
     """
     src = _norm(os.path.join(atlas_dir, "setup", "icons"))
     dst = _norm(os.path.join(maya_prefs_dir, "prefs", "icons"))
+    folder_name = "atlas_matrix_icons"
 
     if not os.path.isdir(src):
         print(f"Icons source not found: {src}")
@@ -263,13 +264,11 @@ def install_icons(atlas_dir: str, maya_prefs_dir: str) -> bool:
     os.makedirs(dst, exist_ok=True)
     copied = 0
 
-    for name in os.listdir(src):
-        if name.lower().endswith((".png", ".xpm", ".bmp", ".svg")):
-            try:
-                shutil.copy2(os.path.join(src, name), os.path.join(dst, name))
-                copied += 1
-            except Exception as e:
-                print(f"Failed to copy icon {name}: {e}")
+    try:
+        shutil.copytree(os.path.join(src, folder_name), os.path.join(dst, folder_name))
+        copied += 1
+    except Exception as e:
+        print(f"Failed to copy icon folder {folder_name}: {e}")
 
     if copied > 0:
         print(f"Copied {copied} icon(s) to {dst}")

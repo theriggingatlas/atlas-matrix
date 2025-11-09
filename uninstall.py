@@ -205,27 +205,22 @@ def remove_icons(maya_prefs_dir: str) -> bool:
         bool: True if removal succeeded or nothing to remove, False on error.
     """
     icons_dir = os.path.join(maya_prefs_dir, "prefs", "icons")
+    folder_name = "atlas_matrix_icons"
 
     if not os.path.exists(icons_dir):
         print(f"Icons directory not found: {icons_dir}")
         return True
 
-    # Icon prefixes to identify Atlas Matrix icons
-    atlas_icon_prefixes = ["atlas", "Atlas", "ATLAS"]
-    valid_extensions = [".png", ".xpm", ".bmp", ".svg"]
     removed_count = 0
 
     try:
-        for filename in os.listdir(icons_dir):
-            if any(filename.startswith(prefix) for prefix in atlas_icon_prefixes):
-                if any(filename.lower().endswith(ext) for ext in valid_extensions):
-                    icon_path = os.path.join(icons_dir, filename)
-                    try:
-                        os.remove(icon_path)
-                        print(f"Removed icon: {filename}")
-                        removed_count += 1
-                    except Exception as e:
-                        print(f"Failed to remove icon {filename}: {e}")
+        icon_path = os.path.join(icons_dir, folder_name)
+        try:
+            os.remove(icon_path)
+            print(f"Removed icon: {folder_name}")
+            removed_count += 1
+        except Exception as e:
+            print(f"Failed to remove icon {folder_name}: {e}")
 
         if removed_count == 0:
             print("No Atlas Matrix icons found to remove")
