@@ -95,6 +95,18 @@ if cmds.window('atlas_matrix_parent', exists=True):
     cmds.deleteUI('atlas_matrix_parent')
 ```
 
+## ⚙️ Uninstallation Issues
+
+### 🟥 Issue: *“Atlas Matrix icons folder can't be deleted.”*
+
+**Cause**: Maya can deny authorization to delete icons
+
+**✅ Solution:**
+
+Restart maya, and Drag and Drop again the uninstall.py file
+
+Or, remove the folder manually in your `maya/<version>/prefs/icons` folder
+
 ## 🧠 Advanced Debugging
 
 If the UI fails silently:

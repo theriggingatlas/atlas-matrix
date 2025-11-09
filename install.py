@@ -92,7 +92,15 @@ def get_maya_prefs_dir(maya_version: str, user_platform: str) -> str:
         str: Path to Maya preferences directory.
     """
     if user_platform == "Windows":
-        return os.path.join(os.environ["USERPROFILE"], "Documents", "maya", maya_version)
+        user_profile = os.environ.get("USERPROFILE", "")
+
+        onedrive_path = os.path.join(os.environ["USERPROFILE"], "OneDrive", "Documents", "maya", maya_version)
+        local_path = os.path.join(os.environ["USERPROFILE"], "Documents", "maya", maya_version)
+
+        if os.path.exists(onedrive_path):
+            return onedrive_path
+        else:
+            return local_path
     elif user_platform == "Darwin":  # Mac
         return os.path.expanduser(f"~/Library/Preferences/Autodesk/maya/{maya_version}")
     else:  # Linux
