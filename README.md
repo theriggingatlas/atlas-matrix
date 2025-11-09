@@ -24,17 +24,6 @@ Atlas Matrix is fully built with **PySide6** and supports Maya 2025’s native Q
 Code is adapted to run on **PySide2**
 ---
 
-## 📁 File Structure
-
-```
-atlas_matrix_tool/
-├── atlas_matrix_ui.py         # Auto-generated UI (compiled from .ui file via pyside6-uic)
-├── atlas_matrix_window.py     # Main QMainWindow logic & UI integration
-├── atlas_matrix_launcher.py   # Clean entry point for Maya integration
-```
-
----
-
 ## ⚙️ Installation
 
 1. Open Maya (2025+).
