@@ -39,9 +39,11 @@ import maya.mel as mel
 
 # ---------- CONSTANTS ----------
 
-SCRIPT_MARKER = "# ATLAS_MATRIX_SCRIPT_PATH"
-ICON_MARKER = "# ATLAS_MATRIX_ICON_PATH"
-END_MARKER = "# END_ATLAS_MATRIX"
+MEL_COMMENT = "// "
+PY_COMMENT = "# "
+SCRIPT_MARKER = "ATLAS_MATRIX_SCRIPT_PATH"
+ICON_MARKER = "ATLAS_MATRIX_ICON_PATH"
+END_MARKER = "END_ATLAS_MATRIX"
 
 
 # ---------- FUNCTIONS ----------
@@ -184,36 +186,36 @@ def write_usersetup_blocks(tools_dir: str, maya_scripts_dir: str) -> None:
 
     # Python blocks
     py_block = (
-        f"{SCRIPT_MARKER}\n"
+        f"{PY_COMMENT}{SCRIPT_MARKER}\n"
         f"import sys\n"
         f"atlas_parent = r\"{parent_dir}\"\n"
         f"if atlas_parent not in sys.path:\n"
         f"    sys.path.append(atlas_parent)\n"
-        f"{END_MARKER}\n"
+        f"{PY_COMMENT}{END_MARKER}\n"
     )
 
     icon_py_block = (
-        f"{ICON_MARKER}\n"
+        f"{PY_COMMENT}{ICON_MARKER}\n"
         f"import maya.mel as mel\n"
         f"icon_path = r\"{icon_dir}\"\n"
         f"current_xbm = mel.eval('getenv \"XBMLANGPATH\"')\n"
         f"if icon_path not in current_xbm:\n"
         f"    mel.eval(f'putenv \"XBMLANGPATH\" \"{{current_xbm}}:/{{icon_path}}\"')\n"
-        f"{END_MARKER}\n"
+        f"{PY_COMMENT}{END_MARKER}\n"
     )
 
     # MEL blocks
     mel_separator = ";" if get_os() == "Windows" else ":"
     mel_block = (
-        f"{SCRIPT_MARKER}\n"
+        f"{MEL_COMMENT}{SCRIPT_MARKER}\n"
         f"putenv(\"MAYA_SCRIPT_PATH\", `getenv \"MAYA_SCRIPT_PATH\"` + \"{mel_separator}{parent_dir}\");\n"
-        f"{END_MARKER}\n"
+        f"{MEL_COMMENT}{END_MARKER}\n"
     )
 
     icon_mel_block = (
-        f"{ICON_MARKER}\n"
+        f"{MEL_COMMENT}{ICON_MARKER}\n"
         f"putenv(\"XBMLANGPATH\", `getenv \"XBMLANGPATH\"` + \":/{icon_dir}\");\n"
-        f"{END_MARKER}\n"
+        f"{MEL_COMMENT}{END_MARKER}\n"
     )
 
     os.makedirs(maya_scripts_dir, exist_ok=True)

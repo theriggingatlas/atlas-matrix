@@ -36,9 +36,11 @@ import maya.cmds as cmds
 
 # ---------- CONSTANTS ----------
 
-SCRIPT_MARKER = "# ATLAS_MATRIX_SCRIPT_PATH"
-ICON_MARKER = "# ATLAS_MATRIX_ICON_PATH"
-END_MARKER = "# END_ATLAS_MATRIX"
+MEL_COMMENT = "// "
+PY_COMMENT = "# "
+SCRIPT_MARKER = "ATLAS_MATRIX_SCRIPT_PATH"
+ICON_MARKER = "ATLAS_MATRIX_ICON_PATH"
+END_MARKER = "END_ATLAS_MATRIX"
 
 
 # ---------- FUNCTIONS ----------
@@ -278,12 +280,12 @@ def uninstall() -> None:
     mel_file = os.path.join(maya_scripts_dir, "userSetup.mel")
     py_file = os.path.join(maya_scripts_dir, "userSetup.py")
 
-    success_list.append(remove_marked_block(mel_file, SCRIPT_MARKER, END_MARKER))
-    success_list.append(remove_marked_block(py_file, SCRIPT_MARKER, END_MARKER))
+    success_list.append(remove_marked_block(mel_file, f"{MEL_COMMENT}{SCRIPT_MARKER}", f"{MEL_COMMENT}{END_MARKER}"))
+    success_list.append(remove_marked_block(py_file, f"{PY_COMMENT}{SCRIPT_MARKER}", f"{PY_COMMENT}{END_MARKER}"))
 
     # Remove icon path blocks from userSetup files
-    success_list.append(remove_marked_block(mel_file, ICON_MARKER, END_MARKER))
-    success_list.append(remove_marked_block(py_file, ICON_MARKER, END_MARKER))
+    success_list.append(remove_marked_block(mel_file, f"{MEL_COMMENT}{ICON_MARKER}", f"{MEL_COMMENT}{END_MARKER}"))
+    success_list.append(remove_marked_block(py_file, f"{PY_COMMENT}{ICON_MARKER}", f"{PY_COMMENT}{END_MARKER}"))
 
     # Remove shelf
     success_list.append(remove_shelf(maya_prefs_dir))
