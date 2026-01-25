@@ -4,7 +4,7 @@
 **Company**: The Rigging Atlas
 **Website**: theriggingatlas.com
 **Version**: 1.0.0  
-**Compatible with**: Autodesk Maya 2020+ (PySide6)
+**Compatible with**: Autodesk Maya 2020+ (PySide5)
 **State**: Still in development
 **License**: Apache 2.0
 
@@ -26,14 +26,14 @@ Code is adapted to run on **PySide2**
 
 ## ⚙️ Installation
 
-1. Open Maya (2025+).
-2. Drag and drop the file `atlas_matrix/setup/install.py` directly into your Maya viewport.
+1. Open Maya (2020+).
+2. Drag and drop the file `atlas_matrix/install.py` directly into your Maya viewport.
 3. Restart Maya.
 4. You’ll now see a new shelf named **AtlasMatrix** in your Maya shelf bar.
 
 ✅ *That’s it! You’re ready to use Atlas Matrix.*
 
-FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/a_installation.md`
+FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/b_installation.md`
 
 ---
 
