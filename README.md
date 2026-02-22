@@ -1,8 +1,6 @@
 # Atlas Matrix – Open Source Maya Constraint Tool
 
 **Author**: Clement Daures
-**Company**: The Rigging Atlas
-**Website**: theriggingatlas.com
 **Version**: 1.0.0  
 **Compatible with**: Autodesk Maya 2020+ (PySide5)
 **State**: Still in development
@@ -10,7 +8,7 @@
 
 ---
 
-## 📖 About  
+## About  
 
 **Atlas Matrix** is a powerful and user-friendly tool designed to simplify and streamline the process of creating and managing matrix-based constraints in Maya.
 
@@ -24,49 +22,49 @@ Atlas Matrix is fully built with **PySide6** and supports Maya 2025’s native Q
 Code is adapted to run on **PySide2**
 ---
 
-## ⚙️ Installation
+## Installation
 
 1. Open Maya (2020+).
 2. Drag and drop the file `atlas_matrix/install.py` directly into your Maya viewport.
 3. Restart Maya.
 4. You’ll now see a new shelf named **AtlasMatrix** in your Maya shelf bar.
 
-✅ *That’s it! You’re ready to use Atlas Matrix.*
+*That’s it! You’re ready to use Atlas Matrix.*
 
 FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/b_installation.md`
 
 ---
 
-## 🖥️ Features
+## Features
 
-### ✅ Matrix Parent Constraint
+### Matrix Parent Constraint
 - Maintain offset
 - Hold state toggle
 - Axis control (Translate, Rotate, Scale)
 - Axis weight sliders (LineEdit + Slider linked)
 - Axis selection control (X, Y, Z)
 
-### 🚧 Matrix Aim Constraint
+### Matrix Aim Constraint
 - Aim & Up vector configuration
 - Target vectors with XYZ inputs
 - World up type selection
 - Hold and offset toggles
 
-### ✅ Matrix Constraint Remover
+### Matrix Constraint Remover
 - Delete constraint on selected object
 
-### 🚧 Matrix Constraint Manager
+### Matrix Constraint Manager
 - Placeholder for future constraint management tools
 
 ---
 
-## 🛠️ How to use
+## How to use
 
 - Refer to `docs/02_user_guide/`
 
 ---
 
-## 💻 Development Notes
+## Development Notes
 
 - Built using **Qt Designer** and compiled via `pyside6-uic`
 - Uses `wrapInstance()` and `OpenMayaUI` for clean integration with Maya main window
@@ -74,12 +72,12 @@ FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/b_installation
 
 ---
 
-## 📌 Compatibility
+## Compatibility
 
 | Maya Version | Qt Version    | Compatible  |
 |--------------|---------------|-------------|
-| 2025+        | PySide6 / Qt6 | ✅ Yes       |
-| 2020 - 2024  | PySide2 / Qt5 | ✅ Yes       |
+| 2025+        | PySide6 / Qt6 |     Yes     |
+| 2020 - 2024  | PySide2 / Qt5 |     Yes     |
 
 ---
 
