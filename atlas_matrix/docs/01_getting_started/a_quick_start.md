@@ -10,7 +10,7 @@ Welcome to **Atlas Matrix**, the open-source Maya matrix constraint tool designe
 
 1. **Download** or clone the `atlas_matrix` folder to any location on your computer (e.g., `D:/tools/atlas_matrix/`)
 2. **Open Maya** (2020+)
-3. **Drag and drop** the file `atlas_matrix/setup/install.py` directly into your Maya viewport
+3. **Drag and drop** the file `atlas_matrix/install.py` directly into your Maya viewport
 4. **Restart Maya** to valid the userSetup installation
 5. **Click Yes** on the userSetup pop-up 
 6. You'll now see a new shelf named **AtlasMatrix** in your Maya shelf bar

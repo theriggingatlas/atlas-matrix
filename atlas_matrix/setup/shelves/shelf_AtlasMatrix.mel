@@ -61,7 +61,7 @@ global proc shelf_AtlasMatrix () {
         -manage 1
         -visible 1
         -preventOverride 0
-        -annotation "Atlas Matrix Parent Constraint UI"
+        -annotation "Remove Atlas Matrix Parent Constraint"
         -enableBackground 0
         -backgroundColor 0 0 0
         -highlightColor 0.321569 0.521569 0.65098
