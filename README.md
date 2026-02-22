@@ -81,7 +81,7 @@ FOR MANUAL INSTALLATION, PLEASE REFER TO `docs/01_getting_started/b_installation
 
 ---
 
-## 📬 Contact
+## Contact
 
 **Author**: Clement Daures  
 Email: [clementdaures.contact@gmail.com](mailto:clementdaures.contact@gmail.com)  
@@ -89,7 +89,7 @@ IG: [@theriggingatlas](https://instagram.com/theriggingatlas) or [@clementdaures
 
 ---
 
-## 📃 License
+## License
 
 Copyright 2025 Clement Daures - The Rigging Atlas
 
